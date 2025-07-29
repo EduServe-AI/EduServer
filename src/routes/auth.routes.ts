@@ -1,9 +1,35 @@
 import { Router } from "express";
-import { registerStudent } from "../controllers/auth.controller";
+import {
+  googleLoginCallBackController,
+  loginController,
+  logoutController,
+  registerUserController,
+} from "../controllers/auth.controller";
+import passport from "passport";
+import { registerUserService } from "../services/auth.service";
 
-const router = Router();
+const authRouter = Router();
 
-router.post("/student-signup", registerStudent)
+authRouter.post("/signup", registerUserController);
 
+authRouter.post("/login", loginController);
 
-export default router; 
+authRouter.post("/logout", logoutController);
+
+authRouter.get(
+  "/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+authRouter.get("/test", () => console.log("Test route hit"));
+
+authRouter.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    session: false,
+    failureRedirect: "/login",
+  }),
+  googleLoginCallBackController
+);
+
+export default authRouter;

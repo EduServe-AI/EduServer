@@ -1,18 +1,23 @@
 import { DataTypes, Model, Optional } from "sequelize";
 import { sequelize } from "../config/db.config";
-import { UserAttributes } from "./types";
-
+import { UserAttributes } from "../types/user";
 
 // 2. Creation attributes for optional fields
-interface UserCreationAttributes extends Optional<UserAttributes, "id" | "createdAt" | "updatedAt"> {}
+interface UserCreationAttributes
+  extends Optional<UserAttributes, "id" | "createdAt" | "updatedAt"> {}
 
 // 3. Define User model class
-class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+class User
+  extends Model<UserAttributes, UserCreationAttributes>
+  implements UserAttributes
+{
   public id!: string;
   public username!: string | null;
   public email!: string;
   public password!: string | null;
+  public picture!: string | null;
   public role!: "student" | "instructor";
+  public isVerified!: boolean;
   public onboarded!: boolean;
 
   // Optional: timestamps
@@ -44,9 +49,17 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    picture: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     role: {
       type: DataTypes.ENUM("student", "instructor"),
       allowNull: true,
+    },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
     onboarded: {
       type: DataTypes.BOOLEAN,
@@ -55,7 +68,7 @@ User.init(
   },
   {
     sequelize,
-    modelName: "User", 
+    modelName: "User",
     tableName: "users", // consistent naming
     timestamps: true,
   }
