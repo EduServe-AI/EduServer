@@ -57,7 +57,46 @@ export const loginController = asyncHandler(
   }
 );
 
-export const logoutController = async (req: Request, res: Response) => {};
+export const logoutController = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    // Check if user is authenticated
+    if (!req.isAuthenticated()) {
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: "No active session to logout",
+      });
+    }
+
+    // Handle logout with Promise
+    await new Promise<void>((resolve, reject) => {
+      req.logout((err) => {
+        if (err) reject(err);
+        resolve();
+      });
+    });
+
+    // Destroy session if it exists
+    if (req.session) {
+      await new Promise<void>((resolve, reject) => {
+        req.session.destroy((err) => {
+          if (err) reject(err);
+          resolve();
+        });
+      });
+    }
+
+    // Clear session cookie
+    res.clearCookie("connect.sid", {
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  }
+);
 
 export const googleLoginCallBackController = asyncHandler(
   async (req: Request, res: Response) => {

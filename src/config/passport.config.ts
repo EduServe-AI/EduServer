@@ -5,6 +5,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { findUserByEmail } from "../services/user.service";
 import config from "./constants";
 import { loginOrCreateAccountService } from "../services/auth.service";
+import bcrypt from "bcrypt";
 
 passport.use(
   new GoogleStrategy(
@@ -24,7 +25,6 @@ passport.use(
     ) => {
       try {
         const { email, name, picture, sub: googleId } = profile._json;
-        console.log(profile, "profile ----------------------");
 
         const user = await loginOrCreateAccountService({
           email,
@@ -49,8 +49,14 @@ passport.use(
         if (!user) {
           return done(null, false, { message: "User not found" });
         }
-        if (user.password !== password) {
-          return done(null, false, { message: "Invalid password" });
+
+        // Check if password exists and compare
+        if (!user.password) {
+          return done(null, false, { message: "Invalid email or password" });
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+          return done(null, false, { message: "Invalid email or password" });
         }
         return done(null, user);
       } catch (error) {
