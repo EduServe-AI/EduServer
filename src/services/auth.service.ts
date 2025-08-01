@@ -1,5 +1,6 @@
 import User from "../models/user.model";
 import bcrypt from "bcrypt";
+import { BadRequestError } from "../utils/errors/specificErrors";
 
 export const registerUserService = async (data: {
   name: string;
@@ -11,7 +12,10 @@ export const registerUserService = async (data: {
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
-      throw new Error("User with this email already exists");
+      throw new BadRequestError({
+        code: "AUTH_EMAIL_ALREADY_EXISTS",
+        // message: "Email already exists",
+      });
     }
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -24,10 +28,11 @@ export const registerUserService = async (data: {
       onboarded: false,
       isVerified: false,
     });
+
     return user;
   } catch (error) {
     console.error("Error during user registration:", error);
-    throw new Error("Registration failed");
+    throw error;
   }
 };
 

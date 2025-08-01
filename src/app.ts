@@ -5,6 +5,7 @@ import morgan from "morgan";
 import config from "./config/constants";
 import "./config/passport.config";
 import { configureSession } from "./config/session.config";
+import { errorHandler } from "./middlewares/errorHandler.middleware";
 
 const BASE_PATH = config.BASE_PATH;
 
@@ -28,6 +29,8 @@ configureSession(app);
 
 // Regsitering the routes
 app.use(`${BASE_PATH}/auth`, authRoutes);
+
+app.use(errorHandler);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("<h1>Eduserve Backend </h1>");
