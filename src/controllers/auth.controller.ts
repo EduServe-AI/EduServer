@@ -4,6 +4,10 @@ import config from '../config/constants'
 import { HTTP_STATUS } from '../config/http.config'
 import asyncHandler from '../middlewares/asyncHandler.middleware'
 import { registerUserService } from '../services/auth.service'
+import {
+    BadRequestError,
+    UnauthorizedError,
+} from '../utils/errors/specificErrors'
 import { registerSchema } from '../validation/auth.validation'
 
 export const registerUserController = asyncHandler(
@@ -36,7 +40,7 @@ export const loginController = asyncHandler(
                     return next(err)
                 }
                 if (!user) {
-                    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+                    throw new UnauthorizedError({
                         message: info?.message || 'Invalid email or password',
                     })
                 }
@@ -58,7 +62,7 @@ export const logoutController = asyncHandler(
     async (req: Request, res: Response) => {
         // Check if user is authenticated
         if (!req.isAuthenticated()) {
-            return res.status(HTTP_STATUS.BAD_REQUEST).json({
+            throw new BadRequestError({
                 message: 'No active session to logout',
             })
         }

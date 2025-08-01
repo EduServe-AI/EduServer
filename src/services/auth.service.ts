@@ -1,6 +1,9 @@
-import User from '../models/user.model'
 import bcrypt from 'bcrypt'
-import { BadRequestError } from '../utils/errors/specificErrors'
+import User from '../models/user.model'
+import {
+    BadRequestError,
+    UnauthorizedError,
+} from '../utils/errors/specificErrors'
 
 export const registerUserService = async (data: {
     name: string
@@ -14,7 +17,6 @@ export const registerUserService = async (data: {
         if (existingUser) {
             throw new BadRequestError({
                 code: 'AUTH_EMAIL_ALREADY_EXISTS',
-                // message: "Email already exists",
             })
         }
         // Hash the password
@@ -45,19 +47,23 @@ export const loginOrCreateAccountService = async (data: {
     const { provider, email, picture, username } = data
     let user = await User.findOne({ where: { email } })
 
-    if (!user) {
-        user = await User.create({
-            username: username,
-            email,
-            password: null, // No password for social login
-            picture: picture || null,
-            role: 'student',
-            onboarded: false,
-            isVerified: provider == 'google' ? true : false, // Assuming social logins are verified
-        })
+    try {
+        if (!user) {
+            user = await User.create({
+                username: username,
+                email,
+                password: null, // No password for social login
+                picture: picture || null,
+                role: 'student',
+                onboarded: false,
+                isVerified: provider == 'google' ? true : false, // Assuming social logins are verified
+            })
+        }
+        return user
+    } catch (error) {
+        console.error('Error during login or account creation:', error)
+        throw error
     }
-
-    return user
 }
 
 export const verifyUserService = async ({
@@ -70,14 +76,27 @@ export const verifyUserService = async ({
     provider?: string
 }) => {
     const user = await User.findOne({ where: { email } })
-    if (!user) {
-        throw new Error('User not found')
-    }
-    if (provider === 'email' && user.password && password) {
-        const isPasswordValid = await bcrypt.compare(password, user.password)
-        if (!isPasswordValid) {
-            throw new Error('Invalid password')
+
+    try {
+        if (!user) {
+            throw new BadRequestError({
+                code: 'AUTH_USER_NOT_FOUND',
+            })
         }
+        if (provider === 'email' && user.password && password) {
+            const isPasswordValid = await bcrypt.compare(
+                password,
+                user.password
+            )
+            if (!isPasswordValid) {
+                throw new UnauthorizedError({
+                    code: 'AUTH_INVALID_CREDENTIALS',
+                })
+            }
+        }
+        return user
+    } catch (error) {
+        console.error('Error during user verification:', error)
+        throw error
     }
-    return user
 }
