@@ -1,2 +1,3 @@
 # Run linting
+npm run prettier:write
 npm run lint

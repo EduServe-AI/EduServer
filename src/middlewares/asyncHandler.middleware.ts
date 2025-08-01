@@ -1,10 +1,10 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, Response } from 'express'
 
 type AsyncControllerType = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => Promise<any>;
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => Promise<unknown>
 
 /**
  * Middleware to handle async errors in controllers.
@@ -12,11 +12,11 @@ type AsyncControllerType = (
  */
 
 export default function asyncHandler(controller: AsyncControllerType) {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      await controller(req, res, next);
-    } catch (error) {
-      next(error);
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await controller(req, res, next)
+        } catch (error) {
+            next(error)
+        }
     }
-  };
 }
