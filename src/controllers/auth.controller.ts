@@ -3,11 +3,14 @@ import passport from 'passport'
 import config from '../config/constants'
 import { HTTP_STATUS } from '../config/http.config'
 import asyncHandler from '../middlewares/asyncHandler.middleware'
+import User from '../models/user.model'
 import { registerUserService } from '../services/auth.service'
+import { clearRefreshTokenCookie, setRefreshTokenCookie } from '../utils/cookie'
 import {
     BadRequestError,
     UnauthorizedError,
 } from '../utils/errors/specificErrors'
+import { generateToken } from '../utils/jwt'
 import { registerSchema } from '../validation/auth.validation'
 
 export const registerUserController = asyncHandler(
@@ -18,10 +21,17 @@ export const registerUserController = asyncHandler(
 
         const user = await registerUserService(body)
 
+        const accessToken = generateToken(user.id, user.role, 'access')
+
+        const refreshToken = generateToken(user.id, user.role, 'refresh')
+
+        setRefreshTokenCookie(res, refreshToken)
+
         return res.status(HTTP_STATUS.CREATED).json({
             message: 'User created successfully',
             data: {
                 user,
+                accessToken,
             },
         })
     }
@@ -40,9 +50,12 @@ export const loginController = asyncHandler(
                     return next(err)
                 }
                 if (!user) {
-                    throw new UnauthorizedError({
-                        message: info?.message || 'Invalid email or password',
-                    })
+                    return next(
+                        new UnauthorizedError({
+                            message:
+                                info?.message || 'Invalid email or password',
+                        })
+                    )
                 }
                 req.logIn(user, (err) => {
                     if (err) {
@@ -60,14 +73,12 @@ export const loginController = asyncHandler(
 
 export const logoutController = asyncHandler(
     async (req: Request, res: Response) => {
-        // Check if user is authenticated
         if (!req.isAuthenticated()) {
             throw new BadRequestError({
                 message: 'No active session to logout',
             })
         }
 
-        // Handle logout with Promise
         await new Promise<void>((resolve, reject) => {
             req.logout((err) => {
                 if (err) reject(err)
@@ -75,7 +86,6 @@ export const logoutController = asyncHandler(
             })
         })
 
-        // Destroy session if it exists
         if (req.session) {
             await new Promise<void>((resolve, reject) => {
                 req.session.destroy((err) => {
@@ -85,12 +95,13 @@ export const logoutController = asyncHandler(
             })
         }
 
-        // Clear session cookie
         res.clearCookie('connect.sid', {
             path: '/',
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
         })
+
+        clearRefreshTokenCookie(res)
 
         return res.status(HTTP_STATUS.OK).json({
             success: true,
@@ -101,6 +112,18 @@ export const logoutController = asyncHandler(
 
 export const googleLoginCallBackController = asyncHandler(
     async (req: Request, res: Response) => {
-        return res.redirect(`${config.FRONTEND_ORIGIN}/`)
+        if (!req.user) {
+            throw new UnauthorizedError({
+                message: 'Unauthorized',
+            })
+        }
+        const user = req.user as InstanceType<typeof User> // Type cast to User model
+        const accessToken = generateToken(user.id, user.role, 'access')
+        const refreshToken = generateToken(user.id, user.role, 'refresh')
+        setRefreshTokenCookie(res, refreshToken)
+
+        return res.redirect(
+            `${config.FRONTEND_ORIGIN}/token_callback?token=${accessToken}`
+        )
     }
 )

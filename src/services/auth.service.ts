@@ -10,13 +10,13 @@ export const registerUserService = async (data: {
     email: string
     password: string
 }) => {
+    const { name, email, password } = data
+    // Check if user already exists
     try {
-        const { name, email, password } = data
-        // Check if user already exists
         const existingUser = await User.findOne({ where: { email } })
         if (existingUser) {
-            throw new BadRequestError({
-                code: 'AUTH_EMAIL_ALREADY_EXISTS',
+            throw new UnauthorizedError({
+                code: 'AUTH_EMAIL_ALREADY_EXISTS' as const,
             })
         }
         // Hash the password
@@ -45,9 +45,10 @@ export const loginOrCreateAccountService = async (data: {
     username?: string
 }) => {
     const { provider, email, picture, username } = data
-    let user = await User.findOne({ where: { email } })
 
     try {
+        let user = await User.findOne({ where: { email } })
+
         if (!user) {
             user = await User.create({
                 username: username,
@@ -61,7 +62,7 @@ export const loginOrCreateAccountService = async (data: {
         }
         return user
     } catch (error) {
-        console.error('Error during login or account creation:', error)
+        console.error('Error in loginOrCreateAccountService:', error)
         throw error
     }
 }
@@ -80,7 +81,7 @@ export const verifyUserService = async ({
     try {
         if (!user) {
             throw new BadRequestError({
-                code: 'AUTH_USER_NOT_FOUND',
+                code: 'AUTH_USER_NOT_FOUND' as const,
             })
         }
         if (provider === 'email' && user.password && password) {
@@ -90,7 +91,7 @@ export const verifyUserService = async ({
             )
             if (!isPasswordValid) {
                 throw new UnauthorizedError({
-                    code: 'AUTH_INVALID_CREDENTIALS',
+                    code: 'AUTH_INVALID_CREDENTIALS' as const,
                 })
             }
         }

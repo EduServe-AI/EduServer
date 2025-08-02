@@ -8,7 +8,13 @@ import {
     ZodValidationError,
 } from '../utils/errors/specificErrors'
 
-export const errorHandler: ErrorRequestHandler = (error, req, res): void => {
+export const errorHandler: ErrorRequestHandler = (
+    error,
+    req,
+    res,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    next
+): void => {
     const isDevelopment = process.env.NODE_ENV === 'development'
 
     logError(error, req, isDevelopment)

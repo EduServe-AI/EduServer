@@ -1,5 +1,7 @@
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express, { Request, Response } from 'express'
+import helmet from 'helmet'
 import morgan from 'morgan'
 import config from './config/constants'
 import './config/passport.config'
@@ -11,6 +13,7 @@ const BASE_PATH = config.BASE_PATH
 
 const app = express()
 
+app.use(helmet())
 // Handling Cors
 app.use(
     cors({
@@ -18,7 +21,7 @@ app.use(
         credentials: true,
     })
 )
-
+app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 // Logging HTTP requests

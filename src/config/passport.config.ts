@@ -36,7 +36,8 @@ passport.use(
                 })
                 done(null, user)
             } catch (error) {
-                console.log(error, false)
+                console.error('Google OAuth error:', error)
+                done(error, false)
             }
         }
     )
@@ -69,7 +70,8 @@ passport.use(
                 }
                 return done(null, user)
             } catch (error) {
-                return done(error)
+                console.error('Local authentication error:', error)
+                return done(error, false)
             }
         }
     )

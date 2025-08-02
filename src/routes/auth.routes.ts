@@ -31,4 +31,6 @@ authRouter.get(
     googleLoginCallBackController
 )
 
+authRouter.post('/refresh-token', () => console.log('Refresh token route hit'))
+
 export default authRouter
