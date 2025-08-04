@@ -14,6 +14,6 @@ export interface UserAttributes {
 declare global {
     namespace Express {
         // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-        interface User extends UserAttributes { }
+        interface User extends UserAttributes {}
     }
 }
