@@ -1,10 +1,11 @@
-import bcrypt from 'bcrypt'
 import { Request } from 'express'
 import passport from 'passport'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
 import { Strategy as LocalStrategy } from 'passport-local'
-import { loginOrCreateAccountService } from '../services/auth.service'
-import { findUserByEmail } from '../services/user.service'
+import {
+    loginOrCreateAccountService,
+    verifyUserService,
+} from '../services/auth.service'
 import config from './constants'
 
 passport.use(
@@ -44,32 +45,19 @@ passport.use(
 
 passport.use(
     new LocalStrategy(
-        { usernameField: 'email', passwordField: 'password', session: true },
+        {
+            usernameField: 'email',
+            passwordField: 'password',
+            session: true,
+        },
         async (email, password, done) => {
             try {
-                const user = await findUserByEmail(email)
-                if (!user) {
-                    return done(null, false, { message: 'User not found' })
-                }
-
-                // Check if password exists and compare
-                if (!user.password) {
-                    return done(null, false, {
-                        message: 'Invalid email or password',
-                    })
-                }
-                const isPasswordValid = await bcrypt.compare(
-                    password,
-                    user.password
-                )
-                if (!isPasswordValid) {
-                    return done(null, false, {
-                        message: 'Invalid email or password',
-                    })
-                }
+                const user = await verifyUserService({ email, password })
+                console.log('user-----------------', user)
                 return done(null, user)
-            } catch (error) {
-                return done(error)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (error: any) {
+                return done(error, false, { message: error?.message })
             }
         }
     )

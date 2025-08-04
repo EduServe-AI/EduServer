@@ -1,20 +1,18 @@
-import passport from 'passport'
+import session from 'cookie-session'
 import { Application } from 'express'
-import session from 'express-session'
+import passport from 'passport'
 import config from './constants'
 
 export const configureSession = (app: Application) => {
     // configureSession(app);
     app.use(
         session({
-            secret: config.SESSION_SECRET,
-            resave: false,
-            saveUninitialized: false,
-            cookie: {
-                secure: process.env.NODE_ENV === 'production',
-                httpOnly: true,
-                maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            },
+            name: 'session',
+            keys: [config.SESSION_SECRET],
+            maxAge: 24 * 60 * 60 * 1000,
+            secure: config.NODE_ENV === 'production',
+            httpOnly: true,
+            sameSite: 'lax',
         })
     )
     app.use(passport.initialize())

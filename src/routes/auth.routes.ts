@@ -25,7 +25,7 @@ authRouter.get('/test', () => console.log('Test route hit'))
 authRouter.get(
     '/google/callback',
     passport.authenticate('google', {
-        session: false,
+        session: true,
         failureRedirect: '/login',
     }),
     googleLoginCallBackController

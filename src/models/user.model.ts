@@ -72,6 +72,9 @@ User.init(
         sequelize,
         modelName: 'User',
         tableName: 'users', // consistent naming
+        defaultScope: {
+            attributes: { exclude: ['password'] },
+        },
         timestamps: true,
     }
 )

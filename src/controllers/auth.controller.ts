@@ -4,10 +4,7 @@ import config from '../config/constants'
 import { HTTP_STATUS } from '../config/http.config'
 import asyncHandler from '../middlewares/asyncHandler.middleware'
 import { registerUserService } from '../services/auth.service'
-import {
-    BadRequestError,
-    UnauthorizedError,
-} from '../utils/errors/specificErrors'
+import { UnauthorizedError } from '../utils/exception/specificErrors'
 import { registerSchema } from '../validation/auth.validation'
 
 export const registerUserController = asyncHandler(
@@ -41,7 +38,8 @@ export const loginController = asyncHandler(
                 }
                 if (!user) {
                     throw new UnauthorizedError({
-                        message: info?.message || 'Invalid email or password',
+                        message:
+                            info?.message || 'Invalid email or password test1',
                     })
                 }
                 req.logIn(user, (err) => {
@@ -60,47 +58,41 @@ export const loginController = asyncHandler(
 
 export const logoutController = asyncHandler(
     async (req: Request, res: Response) => {
-        // Check if user is authenticated
-        if (!req.isAuthenticated()) {
-            throw new BadRequestError({
-                message: 'No active session to logout',
-            })
-        }
+        req.logout((err) => {
+            if (err) {
+                console.error('Logout error', err)
+                return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                    error: 'Failed to log out',
+                })
+            }
 
-        // Handle logout with Promise
-        await new Promise<void>((resolve, reject) => {
-            req.logout((err) => {
-                if (err) reject(err)
-                resolve()
-            })
-        })
+            // Destroy the session to completely clear it
+            req.session.destroy((destroyErr) => {
+                if (destroyErr) {
+                    console.error('Session destroy error', destroyErr)
+                    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+                        error: 'Failed to destroy session',
+                    })
+                }
 
-        // Destroy session if it exists
-        if (req.session) {
-            await new Promise<void>((resolve, reject) => {
-                req.session.destroy((err) => {
-                    if (err) reject(err)
-                    resolve()
+                // Clear the session cookie - express-session uses 'connect.sid' by default
+                res.clearCookie('connect.sid', {
+                    httpOnly: true,
+                    secure: config.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                })
+
+                return res.status(HTTP_STATUS.OK).json({
+                    message: 'Logged out successfully',
                 })
             })
-        }
-
-        // Clear session cookie
-        res.clearCookie('connect.sid', {
-            path: '/',
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-        })
-
-        return res.status(HTTP_STATUS.OK).json({
-            success: true,
-            message: 'Logged out successfully',
         })
     }
 )
 
 export const googleLoginCallBackController = asyncHandler(
     async (req: Request, res: Response) => {
+        console.log('googleLoginCallBackController', req.user)
         return res.redirect(`${config.FRONTEND_ORIGIN}/`)
     }
 )
