@@ -17,13 +17,14 @@ export const passwordSchema = z
 //   );
 
 export const registerSchema = z.object({
-    name: z
+    username: z
         .string()
         .trim()
         .min(3, 'Name must be at least 3 characters')
         .max(100, 'Name too long'),
     email: emailSchema,
     password: passwordSchema,
+    userType: z.literal(['student', 'tutor']),
 })
 
 export const loginSchema = z.object({

@@ -19,6 +19,8 @@ app.use(
     cors({
         origin: ['http://localhost:3000'],
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     })
 )
 
@@ -31,7 +33,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(
     session({
         secret: config.SESSION_SECRET,
-        resave: false,
+        resave: true, // Changed to true to ensure session is saved
         saveUninitialized: false,
         cookie: {
             secure: config.NODE_ENV === 'production',
@@ -39,6 +41,7 @@ app.use(
             maxAge: 24 * 60 * 60 * 1000, // 24 hours
             sameSite: 'lax',
         },
+        name: 'sessionId', // Use a custom name for the session cookie
     })
 )
 app.use(passport.initialize())

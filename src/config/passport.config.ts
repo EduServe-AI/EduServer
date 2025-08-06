@@ -44,6 +44,7 @@ passport.use(
                 done(null, user)
             } catch (error) {
                 console.log(error, false)
+                return done(error, false)
             }
         }
     )
@@ -69,7 +70,21 @@ passport.use(
 )
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-passport.serializeUser((user: any, done) => done(null, user))
+passport.serializeUser((user: any, done) => {
+    console.log('Serializing user:', user)
+    done(null, user.id)
+})
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-passport.deserializeUser((user: any, done) => done(null, user))
+passport.deserializeUser(async (id: string, done) => {
+    try {
+        console.log('Deserializing user with id:', id)
+        const User = (await import('../models/user.model')).default
+        const user = await User.findByPk(id)
+        console.log('Deserialized user:', user)
+        done(null, user)
+    } catch (error) {
+        console.error('Error deserializing user:', error)
+        done(error, null)
+    }
+})

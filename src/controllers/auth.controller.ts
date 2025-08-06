@@ -75,8 +75,8 @@ export const logoutController = asyncHandler(
                     })
                 }
 
-                // Clear the session cookie - express-session uses 'connect.sid' by default
-                res.clearCookie('connect.sid', {
+                // Clear the session cookie - express-session uses 'sessionId' by default
+                res.clearCookie('sessionId', {
                     httpOnly: true,
                     secure: config.NODE_ENV === 'production',
                     sameSite: 'lax',
@@ -92,7 +92,15 @@ export const logoutController = asyncHandler(
 
 export const googleLoginCallBackController = asyncHandler(
     async (req: Request, res: Response) => {
-        console.log('googleLoginCallBackController', req.user)
+        console.log('googleLoginCallBackController - req.user:', req.user)
+        console.log('googleLoginCallBackController - req.session:', req.session)
+
+        if (!req.user) {
+            return res.redirect(
+                `${config.FRONTEND_ORIGIN}/login?error=authentication_failed`
+            )
+        }
+
         return res.redirect(`${config.FRONTEND_ORIGIN}/`)
     }
 )

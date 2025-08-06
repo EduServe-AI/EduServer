@@ -6,11 +6,12 @@ import {
 } from '../utils/exception/specificErrors'
 
 export const registerUserService = async (data: {
-    name: string
+    username: string
     email: string
     password: string
+    userType: 'student' | 'tutor'
 }) => {
-    const { name, email, password } = data
+    const { username, email, password, userType } = data
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } })
     if (existingUser) {
@@ -21,11 +22,11 @@ export const registerUserService = async (data: {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10)
     const user = await User.create({
-        username: name,
+        username: username,
         email,
         picture: null, // No picture provided during registration
         password: hashedPassword,
-        role: 'student', // Default role
+        role: userType, // Default role
         onboarded: false,
         isVerified: false,
     })
@@ -54,7 +55,7 @@ export const loginOrCreateAccountService = async (data: {
             isVerified: provider == 'google' ? true : false, // Assuming social logins are verified
         })
     }
-    return { user_id: user.id }
+    return user
 }
 
 export const verifyUserService = async ({
