@@ -18,7 +18,7 @@ class User
     public email!: string
     public password!: string | null
     public picture!: string | null
-    public role!: 'student' | 'instructor'
+    public role!: 'student' | 'tutor'
     public isVerified!: boolean
     public onboarded!: boolean
 
@@ -56,7 +56,7 @@ User.init(
             allowNull: true,
         },
         role: {
-            type: DataTypes.ENUM('student', 'instructor'),
+            type: DataTypes.ENUM('student', 'tutor'),
             allowNull: true,
         },
         isVerified: {

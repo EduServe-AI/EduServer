@@ -27,6 +27,11 @@ passport.use(
             done: Function
         ) => {
             try {
+                // Get userType from state
+                const state = req.query.state
+                    ? JSON.parse(req.query.state as string)
+                    : {}
+                const userType = state.userType
                 const { email, name, picture } = profile._json
 
                 const user = await loginOrCreateAccountService({
@@ -34,6 +39,7 @@ passport.use(
                     username: name,
                     picture: picture,
                     provider: 'google',
+                    role: userType,
                 })
                 done(null, user)
             } catch (error) {
@@ -53,7 +59,6 @@ passport.use(
         async (email, password, done) => {
             try {
                 const user = await verifyUserService({ email, password })
-                console.log('user-----------------', user)
                 return done(null, user)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {

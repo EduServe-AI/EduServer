@@ -38,8 +38,9 @@ export const loginOrCreateAccountService = async (data: {
     picture?: string
     email: string
     username?: string
+    role: 'student' | 'tutor'
 }) => {
-    const { provider, email, picture, username } = data
+    const { provider, email, picture, username, role } = data
     let user = await User.findOne({ where: { email } })
 
     if (!user) {
@@ -48,7 +49,7 @@ export const loginOrCreateAccountService = async (data: {
             email,
             password: null, // No password for social login
             picture: picture || null,
-            role: 'student',
+            role: role,
             onboarded: false,
             isVerified: provider == 'google' ? true : false, // Assuming social logins are verified
         })

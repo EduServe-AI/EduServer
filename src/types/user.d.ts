@@ -4,7 +4,7 @@ export interface UserAttributes {
     email: string
     password: string | null
     picture: string | null
-    role: 'student' | 'instructor'
+    role: 'student' | 'tutor'
     isVerified: boolean
     onboarded: boolean
     createdAt?: Date
