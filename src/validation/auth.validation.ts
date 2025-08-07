@@ -24,7 +24,7 @@ export const registerSchema = z.object({
         .max(100, 'Name too long'),
     email: emailSchema,
     password: passwordSchema,
-    userType: z.literal(['student', 'tutor']),
+    userType: z.enum(['student', 'tutor']),
 })
 
 export const loginSchema = z.object({

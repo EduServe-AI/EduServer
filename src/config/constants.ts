@@ -7,7 +7,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 const config = {
-    PORT: getEnv('PORT', process.env.PORT),
+    PORT: Number(getEnv('PORT', process.env.PORT)),
     NODE_ENV: getEnv('NODE_ENV', process.env.NODE_ENV || 'development'),
     BASE_PATH: getEnv('BASE_PATH', '/api/v1'),
 

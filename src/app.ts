@@ -33,7 +33,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use(
     session({
         secret: config.SESSION_SECRET,
-        resave: true, // Changed to true to ensure session is saved
+        resave: false, // Changed to true to ensure session is saved
         saveUninitialized: false,
         cookie: {
             secure: config.NODE_ENV === 'production',
