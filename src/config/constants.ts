@@ -1,24 +1,28 @@
-import dotenv from "dotenv"
-import path = require("path");
+import dotenv from 'dotenv'
+import path from 'path'
+import { getEnv } from '../utils/getEnv'
 
-
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: path.resolve(__dirname, "../../.env.local") });
-} 
-
-interface Config {
-    port : number;
-    nodeEnv : string;
-    JWT_SECRET_KEY : string;
-    JWT_EXPIRES_IN : string | number;
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
 }
 
-const config : Config = {
-    port : Number(process.env.PORT) ,
-    nodeEnv : process.env.NODE_ENV || "development" ,
-    JWT_SECRET_KEY : process.env.JWT_SECRET_KEY!,
-    JWT_EXPIRES_IN : process.env.JWT_EXPIRES_IN!
+const config = {
+    PORT: Number(getEnv('PORT', process.env.PORT)),
+    NODE_ENV: getEnv('NODE_ENV', process.env.NODE_ENV || 'development'),
+    BASE_PATH: getEnv('BASE_PATH', '/api/v1'),
+
+    JWT_SECRET_KEY: getEnv('JWT_SECRET_KEY'),
+    JWT_EXPIRES_IN: getEnv('JWT_EXPIRES_IN'),
+
+    GOOGLE_CLIENT_ID: getEnv('GOOGLE_CLIENT_ID'),
+    GOOGLE_CLIENT_SECRET: getEnv('GOOGLE_CLIENT_SECRET'),
+    GOOGLE_CALLBACK_URL: getEnv('GOOGLE_CALLBACK_URL'),
+
+    SESSION_SECRET: getEnv('SESSION_SECRET'),
+    SESSION_EXPIRES_IN: getEnv('SESSION_EXPIRES_IN'),
+
+    FRONTEND_ORIGIN: getEnv('FRONTEND_ORIGIN'),
+    FRONTEND_GOOGLE_CALLBACK_URL: getEnv('FRONTEND_GOOGLE_CALLBACK_URL'),
 }
 
-export default config; 
-
+export default config

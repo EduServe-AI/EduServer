@@ -1,31 +1,62 @@
-import express , { Request , Response } from "express"
-import authRoutes from "./routes/auth.routes"
-import cors from "cors"
-import morgan from "morgan"
+import session from 'express-session'
+import cors from 'cors'
+import express, { Request, Response } from 'express'
+import morgan from 'morgan'
+import passport from 'passport'
+import config from './config/constants'
+import './config/passport.config'
+import { errorHandler } from './middlewares/errorHandler.middleware'
+import authRoutes from './routes/auth.routes'
+import userRoutes from './routes/user.routes'
+import isAuthenticated from './middlewares/isAuthenticated.middleware'
 
-const app = express();
+const BASE_PATH = config.BASE_PATH
 
+const app = express()
 
 // Handling Cors
 app.use(
-  cors({
-    origin: [
-      'http://localhost:3000',
-    ],
-    credentials: true,
-  })
+    cors({
+        origin: ['http://localhost:3000'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    })
 )
 
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
-app.use(express.json());
-app.use(morgan("dev"));
+// Logging HTTP requests
+// configureSession(app)
+
+app.use(
+    session({
+        secret: config.SESSION_SECRET,
+        resave: false, // Changed to true to ensure session is saved
+        saveUninitialized: false,
+        cookie: {
+            secure: config.NODE_ENV === 'production',
+            httpOnly: true,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            sameSite: 'lax',
+        },
+        name: 'sessionId', // Use a custom name for the session cookie
+    })
+)
+app.use(passport.initialize())
+app.use(passport.session())
+
+app.use(morgan('dev'))
 
 // Regsitering the routes
-app.use("/api/v1/auth" , authRoutes)
+app.use(`${BASE_PATH}/auth`, authRoutes)
+app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes)
 
+app.use(errorHandler)
 
-app.get('/' , (req : Request , res : Response) => {
-    res.send("<h1>Eduserve Backend </h1>"); 
+app.get('/', (req: Request, res: Response) => {
+    res.send('<h1>Eduserve Backend </h1>')
 })
 
-export default app; 
+export default app
