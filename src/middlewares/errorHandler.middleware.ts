@@ -1,95 +1,71 @@
-import { ErrorRequestHandler, Request, Response } from 'express'
+import { ErrorRequestHandler, Response } from 'express'
 import z from 'zod'
-import { ErrorResponse } from '../types/error'
+import { HTTP_STATUS } from '../config/http.config'
+import { clearAuthenticationCookies, REFRESH_PATH } from '../utils/cookie'
 import { AppError } from '../utils/exception/appError'
-import {
-    InternalServerError,
-    ZodValidationError,
-} from '../utils/exception/specificErrors'
+import logger from '../utils/logger/logger'
 
-export const errorHandler: ErrorRequestHandler = (
-    error,
-    req,
-    res,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    next
-): void => {
-    const isDevelopment = process.env.NODE_ENV === 'development'
-
-    logError(error, req, isDevelopment)
-
-    if (error instanceof z.ZodError) {
-        return handleAppError(
-            new ZodValidationError(error),
-            req,
-            res,
-            isDevelopment
-        )
-    }
-
-    if (error instanceof AppError) {
-        return handleAppError(error, req, res, isDevelopment)
-    }
-
-    const unknownError = new InternalServerError({
-        message: 'An unexpected error occurred',
-        details: isDevelopment ? getErrorMessage(error) : undefined,
+const formatZodError = (res: Response, error: z.ZodError) => {
+    const errors = error?.issues?.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+    }))
+    return res.status(HTTP_STATUS.BAD_REQUEST).json({
+        message: 'Validation failed',
+        errors: errors,
     })
-
-    return handleAppError(unknownError, req, res, isDevelopment)
 }
 
-function handleAppError(
-    err: AppError,
-    req: Request,
-    res: Response,
-    isDevelopment: boolean
-): void {
-    const response: ErrorResponse = {
-        error: {
-            code: err.code,
-            message: err.message,
-            ...(isDevelopment && {
-                details: err.details,
-                stack: err.stack,
-            }),
-        },
-    }
-
-    res.status(err.statusCode).json(response)
-}
-
-function logError(error: unknown, req: Request, isDevelopment: boolean): void {
-    console.error(`[Error ${new Date().toISOString()}]`, {
-        path: req.path,
+export const errorHandler: ErrorRequestHandler = (err, req, res) => {
+    logger.error('Unhandled error', {
+        error: err.message,
+        stack: err.stack,
+        url: req.url,
         method: req.method,
-        error:
-            error instanceof Error
-                ? {
-                      name: error.name,
-                      message: error.message,
-                      stack: isDevelopment ? error.stack : undefined,
-                  }
-                : String(error),
+        ip: req.ip,
+        userAgent: req.get('User-Agent'),
     })
-}
 
-// function isJsonParseError(
-//   error: unknown
-// ): error is SyntaxError & { status: number; body: unknown } {
-//   return (
-//     error instanceof SyntaxError &&
-//     typeof (error as any).status === "number" &&
-//     (error as any).status === 400 &&
-//     "body" in error
-//   );
-// }
+    // // Database errors
+    // if (err.code === "23505") {
+    //   // Unique constraint violation
+    //   return res.status(409).json({
+    //     error: "Resource already exists",
+    //   });
+    // }
 
-function getErrorMessage(error: unknown): string {
-    if (error instanceof Error) return error.message
-    try {
-        return JSON.stringify(error)
-    } catch {
-        return String(error)
+    // if (err.code === "23503") {
+    //   // Foreign key constraint violation
+    //   return res.status(400).json({
+    //     error: "Invalid reference",
+    //   });
+    // }
+
+    if (err instanceof SyntaxError) {
+        return res.status(HTTP_STATUS.BAD_REQUEST).json({
+            message: 'Invalid JSON format, please check your request body',
+        })
     }
+
+    if (req.path === REFRESH_PATH) {
+        clearAuthenticationCookies(res)
+    }
+
+    // Validation errors
+    if (err instanceof z.ZodError) {
+        return formatZodError(res, err)
+    }
+
+    if (err instanceof AppError) {
+        return res.status(err.statusCode).json({
+            message: err.message,
+            errorCode: err.errorCode,
+        })
+    }
+
+    // Default error
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
+        message: 'Internal Server Error',
+        error: err?.message || 'Unknown error occurred',
+    })
 }

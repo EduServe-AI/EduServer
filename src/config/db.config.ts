@@ -1,28 +1,34 @@
+// utils/database.ts
+
 import { Sequelize } from 'sequelize'
-import dotenv from 'dotenv'
-import path from 'path'
-import { syncModels } from '../models'
+import { config } from '../config/app.config'
+import logger from '../utils/logger/logger'
 
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') })
+const useSSL = config.NODE_ENV === 'production' || config.USE_SSL === 'true'
 
-export const sequelize = new Sequelize(process.env.DATABASE_URL as string, {
+export const sequelize = new Sequelize(config.DATABASE_URL as string, {
     dialect: 'postgres',
     logging: false,
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false,
-        },
-    },
+    dialectOptions: useSSL
+        ? {
+              ssl: {
+                  require: true,
+                  rejectUnauthorized: false,
+              },
+          }
+        : undefined,
 })
 
-export const connectDB = async () => {
+export const connectDatabase = async () => {
     try {
         await sequelize.authenticate()
-        console.log('✅ Database connection established successfully')
+        logger.info('✅ Database connection established successfully')
+
+        // Import and sync models after sequelize is authenticated
+        const { syncModels } = await import('../models')
         await syncModels()
     } catch (error) {
-        console.error('❌ Unable to connect to the database:', error)
+        logger.error('❌ Unable to connect to the database:', error)
         process.exit(1)
     }
 }

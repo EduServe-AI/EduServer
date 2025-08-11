@@ -1,33 +1,63 @@
+// models/user.model.ts
+
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/db.config'
-import { UserAttributes } from '../types/user'
+import { compareValue, hashValue } from '../utils/bcrypt'
 
-// 2. Creation attributes for optional fields
+interface UserPreferences {
+    enable2FA: boolean
+    emailNotification: boolean
+    twoFactorSecret?: string
+}
+
+interface UserAttributes {
+    id: string
+    name: string
+    email: string
+    password: string
+    isEmailVerified: boolean
+    userPreferences: UserPreferences
+    role: 'student' | 'tutor'
+    isVerified: boolean
+    onboarded: boolean
+}
+
 type UserCreationAttributes = Optional<
     UserAttributes,
-    'id' | 'createdAt' | 'updatedAt'
+    'id' | 'isEmailVerified' | 'isVerified' | 'onboarded'
 >
 
-// 3. Define User model class
-class User
+export default class User
     extends Model<UserAttributes, UserCreationAttributes>
     implements UserAttributes
 {
-    public id!: string
-    public username!: string | null
-    public email!: string
-    public password!: string | null
-    public picture!: string | null
-    public role!: 'student' | 'tutor'
-    public isVerified!: boolean
-    public onboarded!: boolean
+    declare id: string
+    declare name: string
+    declare email: string
+    declare password: string
+    declare isEmailVerified: boolean
+    declare userPreferences: UserPreferences
+    declare role: 'student' | 'tutor'
+    declare isVerified: boolean
+    declare onboarded: boolean
 
-    // Optional: timestamps
-    public readonly createdAt!: Date
-    public readonly updatedAt!: Date
+    // 🔐 Password comparison
+    async comparePassword(value: string): Promise<boolean> {
+        return compareValue(value, this.password)
+    }
+
+    // 🔍 Hide sensitive fields when converting to JSON
+    toJSON() {
+        const values = { ...this.get() } as Record<string, unknown>
+        delete values.password
+        if (values.userPreferences) {
+            delete (values.userPreferences as Record<string, unknown>)
+                .twoFactorSecret
+        }
+        return values
+    }
 }
 
-// 4. Init the model
 User.init(
     {
         id: {
@@ -35,9 +65,9 @@ User.init(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        username: {
+        name: {
             type: DataTypes.STRING,
-            allowNull: true,
+            allowNull: false,
         },
         email: {
             type: DataTypes.STRING,
@@ -49,15 +79,23 @@ User.init(
         },
         password: {
             type: DataTypes.STRING,
-            allowNull: true,
+            allowNull: false,
         },
-        picture: {
-            type: DataTypes.STRING,
-            allowNull: true,
+        isEmailVerified: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        userPreferences: {
+            type: DataTypes.JSONB,
+            defaultValue: {
+                enable2FA: false,
+                emailNotification: true,
+            },
         },
         role: {
             type: DataTypes.ENUM('student', 'tutor'),
-            allowNull: true,
+            allowNull: false,
+            defaultValue: 'student',
         },
         isVerified: {
             type: DataTypes.BOOLEAN,
@@ -71,13 +109,14 @@ User.init(
     {
         sequelize,
         modelName: 'User',
-        tableName: 'users', // consistent naming
-        defaultScope: {
-            attributes: { exclude: ['password'] },
-        },
+        tableName: 'users',
         timestamps: true,
+        hooks: {
+            beforeSave: async (user: User) => {
+                if (user.changed('password')) {
+                    user.password = await hashValue(user.password)
+                }
+            },
+        },
     }
 )
-
-// export the class
-export default User
