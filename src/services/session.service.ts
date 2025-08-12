@@ -37,7 +37,8 @@ export const getSessionByIdService = async (sessionId: string) => {
     if (!session) {
         throw new NotFoundException('Session not found')
     }
-    const { userId: user } = session
+
+    const { user } = session as Session & { user: User }
 
     return {
         user,

@@ -15,8 +15,8 @@ import {
     calculateExpirationDate,
     fortyFiveMinutesFromNow,
     ONE_DAY_IN_MS,
-    threeMinutesAgo,
     thirtyDaysFromNow,
+    threeMinutesAgo,
 } from '../utils/date-time'
 
 import { HTTP_STATUS } from '../config/http.config'
@@ -46,7 +46,7 @@ import {
 import logger from '../utils/logger/logger'
 
 export const registerService = async (registerData: RegisterDto) => {
-    const { name, email, password } = registerData
+    const { name, email, password, userType } = registerData
 
     const existingUser = (await User.count({ where: { email } })) > 0
 
@@ -61,7 +61,7 @@ export const registerService = async (registerData: RegisterDto) => {
         email,
         password,
         userPreferences: { enable2FA: false, emailNotification: true },
-        role: 'student',
+        role: userType,
     })
 
     const userId = newUser.id

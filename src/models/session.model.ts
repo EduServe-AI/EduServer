@@ -73,6 +73,9 @@ Session.init(
 )
 
 // Optional: define associations
-Session.belongsTo(User, { foreignKey: 'userId', as: 'user' })
+Session.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'user', // must match
+})
 
 export default Session
