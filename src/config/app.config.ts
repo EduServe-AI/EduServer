@@ -2,7 +2,6 @@ import { getEnv } from '../utils/get-env'
 
 const appConfig = () => ({
     NODE_ENV: getEnv('NODE_ENV'),
-    APP_ORIGIN: getEnv('APP_ORIGIN', 'localhost'),
     PORT: getEnv('PORT'),
     BASE_PATH: getEnv('BASE_PATH', '/api/v1'),
     DATABASE_URL: getEnv('DATABASE_URL'),

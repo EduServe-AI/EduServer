@@ -74,7 +74,7 @@ export const registerService = async (registerData: RegisterDto) => {
     } as any)
 
     // Sending verification email link
-    const verificationUrl = `${config.APP_ORIGIN}/confirm-account?code=${verification.code}`
+    const verificationUrl = `${config.FRONTEND_ORIGIN}/confirm-account?code=${verification.code}`
     await sendEmail({
         to: newUser.email,
         ...verifyEmailTemplate(verificationUrl),
@@ -275,7 +275,7 @@ export const forgotPasswordService = async (email: string) => {
         code: generateUniqueCode(),
     } as any)
 
-    const resetLink = `${config.APP_ORIGIN}/reset-password?code=${
+    const resetLink = `${config.FRONTEND_ORIGIN}/reset-password?code=${
         validCode.code
     }&exp=${expiresAt.getTime()}`
 

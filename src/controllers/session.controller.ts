@@ -38,6 +38,8 @@ export const getSessionController = asyncHandler(
     async (req: Request, res: Response) => {
         const sessionId = req?.sessionId
 
+        console.log('sesionid', sessionId)
+
         if (!sessionId) {
             throw new NotFoundException('Session ID not found. Please log in.')
         }
