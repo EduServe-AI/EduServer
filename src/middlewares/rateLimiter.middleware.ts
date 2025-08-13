@@ -1,4 +1,5 @@
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
+import crypto from 'crypto'
+import rateLimit from 'express-rate-limit'
 import logger from '../utils/logger/logger'
 
 // Auth endpoints rate limiting
@@ -26,12 +27,14 @@ export const passwordResetLimiter = rateLimit({
     max: 3, // limit each IP to 3 password reset requests per hour
     message: 'Too many password reset attempts, please try again later',
     keyGenerator: (req) => {
-        // Use ipKeyGenerator for proper IPv6 handling when IP is needed
-        const emailKey = req.body.email
-        if (emailKey) {
-            return emailKey
+        const email = req.body?.email as string | undefined
+        if (email) {
+            return crypto
+                .createHash('sha256')
+                .update(email.toLowerCase())
+                .digest('hex')
         }
-        return ipKeyGenerator(req.ip || 'unknown')
+        return req.ip || 'unknown'
     },
 })
 
@@ -41,12 +44,14 @@ export const magicLinkLimiter = rateLimit({
     max: 5, // limit each IP to 5 magic link requests per hour
     message: 'Too many magic link requests, please try again later',
     keyGenerator: (req) => {
-        // Use ipKeyGenerator for proper IPv6 handling when IP is needed
-        const emailKey = req.body.email
-        if (emailKey) {
-            return emailKey
+        const email = req.body?.email as string | undefined
+        if (email) {
+            return crypto
+                .createHash('sha256')
+                .update(email.toLowerCase())
+                .digest('hex')
         }
-        return ipKeyGenerator(req.ip || 'unknown')
+        return req.ip || 'unknown'
     },
 })
 
