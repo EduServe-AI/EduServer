@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import logger from '../utils/logger/logger'
 
 // Auth endpoints rate limiting
@@ -34,7 +34,7 @@ export const passwordResetLimiter = rateLimit({
                 .update(email.toLowerCase())
                 .digest('hex')
         }
-        return req.ip || 'unknown'
+        return ipKeyGenerator(req.ip || 'unknown')
     },
 })
 
@@ -51,7 +51,7 @@ export const magicLinkLimiter = rateLimit({
                 .update(email.toLowerCase())
                 .digest('hex')
         }
-        return req.ip || 'unknown'
+        return ipKeyGenerator(req.ip || 'unknown')
     },
 })
 
