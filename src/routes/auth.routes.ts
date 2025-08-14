@@ -1,47 +1,43 @@
 import { Router } from 'express'
-import passport from 'passport'
 import {
-    googleLoginCallBackController,
+    forgotPasswordController,
     loginController,
     logoutController,
-    registerUserController,
+    refreshTokenController,
+    registerController,
+    resetPasswordController,
+    verifyEmailController,
 } from '../controllers/auth.controller'
+import { authenticateJWT } from '../utils/jwt.strategy'
 
-const authRouter = Router()
+const authRoutes = Router()
 
-authRouter.post('/signup', registerUserController)
+authRoutes.post('/register', registerController)
+authRoutes.post('/login', loginController)
+authRoutes.post('/verify/email', verifyEmailController)
+authRoutes.post('/password/forgot', forgotPasswordController)
+authRoutes.post('/password/reset', resetPasswordController)
+authRoutes.post('/logout', authenticateJWT, logoutController)
 
-authRouter.post('/login', loginController)
+authRoutes.get('/refresh', refreshTokenController)
 
-authRouter.post('/logout', logoutController)
+// authRoutes.get('/google', (req, res, next) => {
+//     const userType = req.query.userType
 
-// authRouter.get(
-//     '/google',
 //     passport.authenticate('google', {
 //         scope: ['profile', 'email'],
-//         state: JSON.stringify({ userType }), // Pass userType via state
-//     })
+//         state: JSON.stringify({ userType }),
+//         // Optional: prompt: 'select_account' to force account selection
+//     })(req, res, next)
+// })
+
+// authRoutes.get(
+//     '/google/callback',
+//     passport.authenticate('google', {
+//         session: true,
+//         failureRedirect: '/login',
+//     }),
+//     googleLoginCallBackController
 // )
 
-authRouter.get('/google', (req, res, next) => {
-    const userType = req.query.userType
-
-    passport.authenticate('google', {
-        scope: ['profile', 'email'],
-        state: JSON.stringify({ userType }),
-        // Optional: prompt: 'select_account' to force account selection
-    })(req, res, next)
-})
-
-authRouter.get('/test', () => console.log('Test route hit'))
-
-authRouter.get(
-    '/google/callback',
-    passport.authenticate('google', {
-        session: true,
-        failureRedirect: '/login',
-    }),
-    googleLoginCallBackController
-)
-
-export default authRouter
+export default authRoutes

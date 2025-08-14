@@ -1,12 +1,13 @@
-/**
- * Comprehensive HTTP Status Codes
- *
- * Contains all standard HTTP status codes with clear documentation.
- * Organized by response categories (1XX-5XX).
- *
- * @category HTTP
- */
-export const HTTP_STATUS = {
+// /**
+//  * Comprehensive HTTP Status Codes
+//  *
+//  * Contains all standard HTTP status codes with clear documentation.
+//  * Organized by response categories (1XX-5XX).
+//  *
+//  * @category HTTP
+//  */
+
+const httpConfig = () => ({
     // ======================
     // Informational (1XX)
     // ======================
@@ -14,7 +15,6 @@ export const HTTP_STATUS = {
     SWITCHING_PROTOCOLS: 101,
     PROCESSING: 102,
     EARLY_HINTS: 103,
-
     // ======================
     // Success (2XX)
     // ======================
@@ -28,7 +28,6 @@ export const HTTP_STATUS = {
     MULTI_STATUS: 207,
     ALREADY_REPORTED: 208,
     IM_USED: 226,
-
     // ======================
     // Redirection (3XX)
     // ======================
@@ -40,7 +39,6 @@ export const HTTP_STATUS = {
     USE_PROXY: 305,
     TEMPORARY_REDIRECT: 307,
     PERMANENT_REDIRECT: 308,
-
     // ======================
     // Client Errors (4XX)
     // ======================
@@ -73,7 +71,6 @@ export const HTTP_STATUS = {
     TOO_MANY_REQUESTS: 429,
     REQUEST_HEADER_FIELDS_TOO_LARGE: 431,
     UNAVAILABLE_FOR_LEGAL_REASONS: 451,
-
     // ======================
     // Server Errors (5XX)
     // ======================
@@ -88,6 +85,8 @@ export const HTTP_STATUS = {
     LOOP_DETECTED: 508,
     NOT_EXTENDED: 510,
     NETWORK_AUTHENTICATION_REQUIRED: 511,
-} as const
+})
+
+export const HTTP_STATUS = httpConfig()
 
 export type HttpStatusCodeType = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]

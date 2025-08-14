@@ -1,20 +1,21 @@
-import session from 'express-session'
+import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import 'dotenv/config'
 import express, { Request, Response } from 'express'
+import helmet from 'helmet'
 import morgan from 'morgan'
-import passport from 'passport'
-import config from './config/constants'
 import './config/passport.config'
+import asyncHandler from './middlewares/asyncHandler.middleware'
 import { errorHandler } from './middlewares/errorHandler.middleware'
+import passport from './middlewares/passport.middleware'
+import { limiter } from './middlewares/rateLimiter.middleware'
 import authRoutes from './routes/auth.routes'
-import userRoutes from './routes/user.routes'
-import isAuthenticated from './middlewares/isAuthenticated.middleware'
-
-const BASE_PATH = config.BASE_PATH
+import sessionRoutes from './routes/session.routes'
+import { authenticateJWT } from './utils/jwt.strategy'
 
 const app = express()
 
-// Handling Cors
+app.use(helmet())
 app.use(
     cors({
         origin: ['http://localhost:3000'],
@@ -23,40 +24,32 @@ app.use(
         allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
     })
 )
-
-app.use(express.json())
+app.use(limiter)
+app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Logging HTTP requests
-// configureSession(app)
-
-app.use(
-    session({
-        secret: config.SESSION_SECRET,
-        resave: false, // Changed to true to ensure session is saved
-        saveUninitialized: false,
-        cookie: {
-            secure: config.NODE_ENV === 'production',
-            httpOnly: true,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            sameSite: 'lax',
-        },
-        name: 'sessionId', // Use a custom name for the session cookie
-    })
-)
+app.use(cookieParser())
 app.use(passport.initialize())
-app.use(passport.session())
 
 app.use(morgan('dev'))
 
 // Regsitering the routes
-app.use(`${BASE_PATH}/auth`, authRoutes)
-app.use(`${BASE_PATH}/user`, isAuthenticated, userRoutes)
+app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/session', authenticateJWT, sessionRoutes)
+// app.use('/api/v1/user', userRoutes)
 
-app.use(errorHandler)
-
-app.get('/', (req: Request, res: Response) => {
-    res.send('<h1>Eduserve Backend </h1>')
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', timestamp: new Date().toISOString() })
 })
+
+app.get(
+    '/',
+    asyncHandler(async (req: Request, res: Response) => {
+        res.send('<h1>Eduserve Backend </h1>')
+    })
+)
+
+// Error handling middleware
+app.use(errorHandler)
 
 export default app
