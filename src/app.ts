@@ -4,6 +4,7 @@ import 'dotenv/config'
 import express, { Request, Response } from 'express'
 import helmet from 'helmet'
 import morgan from 'morgan'
+import { config } from './config/app.config'
 import './config/passport.config'
 import asyncHandler from './middlewares/asyncHandler.middleware'
 import { errorHandler } from './middlewares/errorHandler.middleware'
@@ -18,7 +19,7 @@ const app = express()
 app.use(helmet())
 app.use(
     cors({
-        origin: ['http://localhost:3000'],
+        origin: ['http://localhost:3000', config.FRONTEND_ORIGIN],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
