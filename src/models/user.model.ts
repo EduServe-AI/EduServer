@@ -14,6 +14,9 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
   public password!: string | null;
   public role!: "student" | "instructor";
   public onboarded!: boolean;
+  public googleId?: string | null;
+  public avatarUrl?: string | null;
+  public authProvider?: "local" | "google";
 
   // Optional: timestamps
   public readonly createdAt!: Date;
@@ -52,6 +55,20 @@ User.init(
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    googleId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    avatarUrl: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    authProvider: {
+      type: DataTypes.ENUM("local", "google"),
+      allowNull: false,
+      defaultValue: "local",
+    }
   },
   {
     sequelize,
