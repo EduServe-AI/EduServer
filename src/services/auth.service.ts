@@ -354,6 +354,34 @@ export const logoutService = async (sessionId: string) => {
     })
 }
 
+export const createSessionAndTokensForUser = async ({
+    userId,
+    userAgent,
+}: {
+    userId: string
+    userAgent?: string
+}) => {
+    const session = await Session.create({
+        userId,
+        userAgent,
+        expiredAt: thirtyDaysFromNow(),
+    } as any)
+
+    const accessToken = signJwtToken({
+        userId,
+        sessionId: session.id,
+    })
+
+    const refreshToken = signJwtToken(
+        {
+            sessionId: session.id,
+        },
+        refreshTokenSignOptions
+    )
+
+    return { accessToken, refreshToken }
+}
+
 // export const loginOrCreateAccountService = async (data: {
 //     provider: string
 //     picture?: string

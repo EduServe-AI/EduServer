@@ -20,6 +20,10 @@ interface UserAttributes {
     role: 'student' | 'tutor'
     isVerified: boolean
     onboarded: boolean
+    // OAuth fields
+    provider?: 'local' | 'google'
+    googleId?: string | null
+    picture?: string | null
 }
 
 type UserCreationAttributes = Optional<
@@ -40,6 +44,9 @@ export default class User
     declare role: 'student' | 'tutor'
     declare isVerified: boolean
     declare onboarded: boolean
+    declare provider?: 'local' | 'google'
+    declare googleId?: string | null
+    declare picture?: string | null
 
     // 🔐 Password comparison
     async comparePassword(value: string): Promise<boolean> {
@@ -104,6 +111,20 @@ User.init(
         onboarded: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
+        },
+        provider: {
+            type: DataTypes.ENUM('local', 'google'),
+            allowNull: true,
+            defaultValue: 'local',
+        },
+        googleId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
+        },
+        picture: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
     },
     {

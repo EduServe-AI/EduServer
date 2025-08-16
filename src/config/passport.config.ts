@@ -1,87 +1,83 @@
-// import { Request } from 'express'
-// import passport from 'passport'
-// import { Strategy as GoogleStrategy } from 'passport-google-oauth20'
-// import { Strategy as LocalStrategy } from 'passport-local'
-// import {
-//     loginOrCreateAccountService,
-//     verifyUserService,
-// } from '../services/auth.service'
-// import { config } from './app.config'
+import { Request } from 'express'
+import passport from 'passport'
+import {
+    Strategy as GoogleStrategy,
+    Profile,
+    VerifyCallback,
+    GoogleCallbackParameters,
+} from 'passport-google-oauth20'
+import { config } from './app.config'
+import {
+    findOrCreateUserFromGoogle,
+    findUserByEmailOnly,
+} from '../services/google-auth.service'
 
-// passport.use(
-//     new GoogleStrategy(
-//         {
-//             clientID: config.GOOGLE.CLIENT_ID,
-//             clientSecret: config.GOOGLE.CLIENT_SECRET,
-//             callbackURL: config.GOOGLE.CALLBACK_URL,
-//             scope: ['profile', 'email'],
-//             passReqToCallback: true,
-//         },
-//         async (
-//             req: Request,
-//             accessToken: string,
-//             refreshToken: string,
-//             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//             profile: any,
-//             // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-//             done: Function
-//         ) => {
-//             try {
-//                 // Get userType from state
-//                 const state = req.query.state
-//                     ? JSON.parse(req.query.state as string)
-//                     : {}
-//                 const userType = state.userType
-//                 const { email, name, picture } = profile._json
+passport.use(
+    new GoogleStrategy(
+        {
+            clientID: config.GOOGLE.CLIENT_ID,
+            clientSecret: config.GOOGLE.CLIENT_SECRET,
+            callbackURL: config.GOOGLE.CALLBACK_URL,
+            scope: ['profile', 'email'],
+            passReqToCallback: true,
+        },
+        async (
+            req: Request,
+            _accessToken: string,
+            _refreshToken: string,
+            _params: GoogleCallbackParameters,
+            profile: Profile,
+            done: VerifyCallback
+        ) => {
+            try {
+                const stateRaw =
+                    typeof req.query.state === 'string' ? req.query.state : '{}'
+                const state = safeParseState(stateRaw)
+                const mode = (state.mode as 'signin' | 'signup') || 'signin'
+                const role =
+                    (state.userType as 'student' | 'tutor') || 'student'
 
-//                 const user = await loginOrCreateAccountService({
-//                     email,
-//                     username: name,
-//                     picture: picture,
-//                     provider: 'google',
-//                     role: userType,
-//                 })
-//                 done(null, user)
-//             } catch (error) {
-//                 console.log(error, false)
-//                 return done(error, false)
-//             }
-//         }
-//     )
-// )
+                const primaryEmail = profile.emails?.[0]?.value
+                const displayName =
+                    profile.displayName || profile.name?.givenName || 'User'
+                const picture = profile.photos?.[0]?.value
+                const googleId = profile.id
 
-// passport.use(
-//     new LocalStrategy(
-//         {
-//             usernameField: 'email',
-//             passwordField: 'password',
-//             session: true,
-//         },
-//         async (email, password, done) => {
-//             try {
-//                 const user = await verifyUserService({ email, password })
-//                 return done(null, user)
-//                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//             } catch (error: any) {
-//                 return done(error, false, { message: error?.message })
-//             }
-//         }
-//     )
-// )
+                if (!primaryEmail) {
+                    return done(new Error('Google account has no email'), false)
+                }
 
-// // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// passport.serializeUser((user: any, done) => {
-//     done(null, user.id)
-// })
+                if (mode === 'signin') {
+                    const existing = await findUserByEmailOnly(primaryEmail)
+                    if (!existing) {
+                        return done(null, false, {
+                            code: 'SIGNUP_REQUIRED',
+                            message: 'No account found. Please sign up first.',
+                        })
+                    }
+                    return done(null, existing)
+                }
 
-// // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// passport.deserializeUser(async (id: string, done) => {
-//     try {
-//         const User = (await import('../models/user.model')).default
-//         const user = await User.findByPk(id)
-//         done(null, user)
-//     } catch (error) {
-//         console.error('Error deserializing user:', error)
-//         done(error, null)
-//     }
-// })
+                // signup flow
+                const { user } = await findOrCreateUserFromGoogle({
+                    email: primaryEmail,
+                    name: displayName,
+                    googleId,
+                    picture,
+                    role,
+                })
+                return done(null, user)
+            } catch (error) {
+                return done(error as Error, false)
+            }
+        }
+    )
+)
+
+function safeParseState(state: string): Record<string, unknown> {
+    try {
+        return JSON.parse(state)
+    } catch {
+        return {}
+    }
+}
