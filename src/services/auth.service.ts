@@ -370,7 +370,7 @@ export const registerWithGoogleService = async (data: {
         email,
         password, // No password for social login
         picture: picture || null,
-        role: role,
+        role,
         googleId,
         onboarded: false,
         isVerified: true, // Assuming social logins are verified
