@@ -6,9 +6,9 @@ import './verification-code.model'
 
 export const syncModels = async () => {
     if (config.NODE_ENV === 'development') {
-        console.log('🔄 Syncing Sequelize models (dev only)...')
+        console.info('🔄 Syncing Sequelize models (dev only)...')
         await sequelize.sync({ alter: true })
     } else {
-        console.log('🚫 Skipping model sync in production')
+        console.info('🚫 Skipping model sync in production')
     }
 }

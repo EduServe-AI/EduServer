@@ -15,16 +15,23 @@ interface UserAttributes {
     name: string
     email: string
     password: string
+    picture?: string | null
     isEmailVerified: boolean
     userPreferences: UserPreferences
     role: 'student' | 'tutor'
+    googleId?: string | null
     isVerified: boolean
     onboarded: boolean
 }
 
 type UserCreationAttributes = Optional<
     UserAttributes,
-    'id' | 'isEmailVerified' | 'isVerified' | 'onboarded'
+    | 'id'
+    | 'isEmailVerified'
+    | 'isVerified'
+    | 'onboarded'
+    | 'googleId'
+    | 'picture'
 >
 
 export default class User
@@ -35,9 +42,11 @@ export default class User
     declare name: string
     declare email: string
     declare password: string
+    declare picture?: string | null
     declare isEmailVerified: boolean
     declare userPreferences: UserPreferences
     declare role: 'student' | 'tutor'
+    declare googleId?: string | null
     declare isVerified: boolean
     declare onboarded: boolean
 
@@ -81,6 +90,10 @@ User.init(
             type: DataTypes.STRING,
             allowNull: false,
         },
+        picture: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         isEmailVerified: {
             type: DataTypes.BOOLEAN,
             defaultValue: false,
@@ -96,6 +109,11 @@ User.init(
             type: DataTypes.ENUM('student', 'tutor'),
             allowNull: false,
             defaultValue: 'student',
+        },
+        googleId: {
+            type: DataTypes.STRING,
+            allowNull: true,
+            unique: true,
         },
         isVerified: {
             type: DataTypes.BOOLEAN,

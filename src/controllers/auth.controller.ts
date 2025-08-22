@@ -1,9 +1,12 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
+import { config } from '../config/app.config'
 import { HTTP_STATUS } from '../config/http.config'
 import asyncHandler from '../middlewares/asyncHandler.middleware'
+import passport from '../middlewares/passport.middleware'
 import {
     forgotPasswordService,
     loginService,
+    loginWithGoogleService,
     logoutService,
     refreshTokenService,
     registerService,
@@ -148,17 +151,62 @@ export const logoutController = asyncHandler(
     }
 )
 
-// export const googleLoginCallBackController = asyncHandler(
-//     async (req: Request, res: Response) => {
-//         console.log('googleLoginCallBackController - req.user:', req.user)
-//         console.log('googleLoginCallBackController - req.session:', req.session)
+export const googleAuthController = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        const userType = req.query.userType
+        const authFlow = req.query.authFlow
 
-//         if (!req.user) {
-//             return res.redirect(
-//                 `${config.FRONTEND_ORIGIN}/login?error=authentication_failed`
-//             )
-//         }
+        passport.authenticate('google', {
+            scope: ['profile', 'email'],
+            session: false,
+            state: JSON.stringify({ userType, authFlow }),
+        })(req, res, next)
+    }
+)
 
-//         return res.redirect(`${config.FRONTEND_ORIGIN}/`)
-//     }
-// )
+export const googleCallbackController = asyncHandler(
+    async (req: Request, res: Response): Promise<void> => {
+        return new Promise<void>((resolve, reject) => {
+            passport.authenticate(
+                'google',
+                { session: false },
+                async (
+                    err: Error | null,
+                    user: Express.User | false,
+                    info?: { message?: string }
+                ) => {
+                    try {
+                        if (err) {
+                            return reject(err)
+                        }
+                        if (!user) {
+                            const errorMsg =
+                                info?.message ||
+                                'Account not found. Please sign up first.'
+
+                            return res.redirect(
+                                `${config.FRONTEND_ORIGIN}/signin?message=${encodeURIComponent(errorMsg)}`
+                            )
+                        }
+
+                        const userAgent = req.headers['user-agent']
+                        const { accessToken, refreshToken } =
+                            await loginWithGoogleService(user.id, userAgent)
+
+                        setAuthenticationCookies({
+                            res,
+                            accessToken,
+                            refreshToken,
+                        })
+
+                        res.redirect(`${config.FRONTEND_ORIGIN}/dashboard`)
+
+                        resolve()
+                    } catch (e) {
+                        reject(e)
+                    }
+                }
+            )(req, res)
+        })
+    }
+)

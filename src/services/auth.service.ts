@@ -354,29 +354,57 @@ export const logoutService = async (sessionId: string) => {
     })
 }
 
-// export const loginOrCreateAccountService = async (data: {
-//     provider: string
-//     picture?: string
-//     email: string
-//     username?: string
-//     role: 'student' | 'tutor'
-// }) => {
-//     const { provider, email, picture, username, role } = data
-//     let user = await User.findOne({ where: { email } })
+export const registerWithGoogleService = async (data: {
+    picture?: string
+    email: string
+    name: string
+    role: 'student' | 'tutor'
+    password: string
+    googleId: string
+}) => {
+    const { email, picture, password, name, role, googleId } = data
+    // let user = await User.findOne({ where: { email } })
 
-//     if (!user) {
-//         user = await User.create({
-//             username: username,
-//             email,
-//             password: null, // No password for social login
-//             picture: picture || null,
-//             role: role,
-//             onboarded: false,
-//             isVerified: provider == 'google' ? true : false, // Assuming social logins are verified
-//         })
-//     }
-//     return user
-// }
+    const user = await User.create({
+        name,
+        email,
+        password, // No password for social login
+        picture: picture || null,
+        role: role,
+        googleId,
+        onboarded: false,
+        isVerified: true, // Assuming social logins are verified
+        userPreferences: { enable2FA: false, emailNotification: true },
+    })
+    return user
+}
+
+export const loginWithGoogleService = async (
+    userId: string,
+    userAgent?: string
+) => {
+    logger.info(`Creating session for user ID: ${userId}`)
+    const session = await Session.create({
+        userId,
+        userAgent,
+        expiredAt: thirtyDaysFromNow(),
+    } as any)
+
+    logger.info(`Signing tokens for user ID: ${userId}`)
+    const accessToken = signJwtToken({
+        userId,
+        sessionId: session.id,
+    })
+
+    const refreshToken = signJwtToken(
+        {
+            sessionId: session.id,
+        },
+        refreshTokenSignOptions
+    )
+
+    return { accessToken, refreshToken }
+}
 
 // export const verifyUserService = async ({
 //     email,
