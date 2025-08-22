@@ -184,9 +184,10 @@ export const googleCallbackController = asyncHandler(
                                 info?.message ||
                                 'Account not found. Please sign up first.'
 
-                            return res.redirect(
+                            res.redirect(
                                 `${config.FRONTEND_ORIGIN}/signin?message=${encodeURIComponent(errorMsg)}`
                             )
+                            return resolve()
                         }
 
                         const userAgent = req.headers['user-agent']
@@ -201,9 +202,9 @@ export const googleCallbackController = asyncHandler(
 
                         res.redirect(`${config.FRONTEND_ORIGIN}/dashboard`)
 
-                        resolve()
+                        return resolve()
                     } catch (e) {
-                        reject(e)
+                        return reject(e)
                     }
                 }
             )(req, res)

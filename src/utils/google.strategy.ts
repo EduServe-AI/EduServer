@@ -61,9 +61,6 @@ export const setupGoogleStrategy = (passportInstance: PassportStatic) => {
                         if (authFlow === 'signup') {
                             // Register new user
                             const randomPassword = generateUniqueCode()
-                            logger.info(
-                                `Generated new password for user ${email}: ${randomPassword}`
-                            )
 
                             const fullName = name || 'No name'
                             const safeUserType: 'student' | 'tutor' =
