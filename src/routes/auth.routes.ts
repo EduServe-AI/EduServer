@@ -1,6 +1,8 @@
 import { Router } from 'express'
 import {
     forgotPasswordController,
+    googleAuthController,
+    googleCallbackController,
     loginController,
     logoutController,
     refreshTokenController,
@@ -21,23 +23,8 @@ authRoutes.post('/logout', authenticateJWT, logoutController)
 
 authRoutes.get('/refresh', refreshTokenController)
 
-// authRoutes.get('/google', (req, res, next) => {
-//     const userType = req.query.userType
+authRoutes.get('/google', googleAuthController)
 
-//     passport.authenticate('google', {
-//         scope: ['profile', 'email'],
-//         state: JSON.stringify({ userType }),
-//         // Optional: prompt: 'select_account' to force account selection
-//     })(req, res, next)
-// })
-
-// authRoutes.get(
-//     '/google/callback',
-//     passport.authenticate('google', {
-//         session: true,
-//         failureRedirect: '/login',
-//     }),
-//     googleLoginCallBackController
-// )
+authRoutes.get('/google/callback', googleCallbackController)
 
 export default authRoutes
