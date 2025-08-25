@@ -74,6 +74,7 @@
         "husky": "^9.1.7",
         "jiti": "^2.5.1",
         "prettier": "^3.6.2",
+        "sequelize-auto-migrations": "^1.0.3",
         "sequelize-cli": "^6.6.3",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
