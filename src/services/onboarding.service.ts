@@ -10,6 +10,9 @@ import { BadRequestException } from '../utils/exception/catch-errors'
 import { ErrorCode } from '../constants/enums/error-code.enum'
 import { OnboardingSchemaType } from '../validation/onboarding.validation'
 import { EducationType } from '../@types/onboarding'
+import { sequelize } from '../config/db.config'
+
+import { InternalServerException } from '../utils/exception/catch-errors'
 
 export const onboardInstructor = async (
     body: OnboardingSchemaType,
@@ -33,99 +36,116 @@ export const onboardInstructor = async (
         linkedinUrl,
         availability,
     } = body as OnboardingSchemaType
-    console.log('availability', availability)
 
-    logger.info(`Onboarding instructor ${instructor.email}`)
+    const transaction = await sequelize.transaction()
 
-    // Creating instructor profile
-    const instructorProfile = await InstructorProfiles.create({
-        instructorId: userId,
-        bio,
-        githubUrl,
-        linkedinUrl,
-        basePrice: 100,
-        level: 'beginner',
-    })
-    logger.info(
-        `Created instructor profile : instructor : ${instructorProfile.id}`
-    )
+    try {
+        logger.info(`Onboarding instructor ${instructor.email}`)
+        // Creating instructor profile
+        const instructorProfile = await InstructorProfiles.create(
+            {
+                instructorId: userId,
+                bio,
+                githubUrl,
+                linkedinUrl,
+                basePrice: 100,
+                level: 'beginner',
+            },
+            { transaction }
+        )
+        logger.info(
+            `Created instructor profile : instructor : ${instructorProfile.id}`
+        )
 
-    // Creating educations for the instructor
-    const education_qualifications = education.map(
-        (education: EducationType) => ({
-            instructorProfileId: instructorProfile.id,
-            universityName: education.universityName,
-            degree: education.degree,
-            degreeType: education.degreeType,
-            startYear: parseInt(education.startYear.toString()),
-            endYear: parseInt(education.endYear.toString()),
-            cgpa: parseFloat(education.cgpa.toString()),
-            transcriptUrl: education.transcript?.url || '',
+        // Creating educations for the instructor
+        const education_qualifications = education.map(
+            (education: EducationType) => ({
+                instructorProfileId: instructorProfile.id,
+                universityName: education.universityName,
+                degree: education.degree,
+                degreeType: education.degreeType,
+                startYear: parseInt(education.startYear.toString()),
+                endYear: parseInt(education.endYear.toString()),
+                cgpa: parseFloat(education.cgpa.toString()),
+                transcriptUrl: education.transcript?.url || '',
+            })
+        )
+
+        await Education.bulkCreate(education_qualifications, {
+            transaction,
+            ignoreDuplicates: true,
+            returning: false,
         })
-    )
+        logger.info(`Created instructor educations`)
 
-    await Education.bulkCreate(education_qualifications, {
-        ignoreDuplicates: true,
-        returning: false,
-    })
-    logger.info(`Created instructor educations`)
+        // Adding skills for the instructor
+        const skillPromises = skills.map((skillName: string) => ({
+            instructorProfileId: instructorProfile.id,
+            name: skillName,
+        }))
+        await Skill.bulkCreate(skillPromises, {
+            transaction,
+            ignoreDuplicates: true,
+            returning: false,
+        })
+        logger.info(`Skills added for the instructors`)
 
-    // Adding skills for the instructor
-    const skillPromises = skills.map((skillName: string) => ({
-        instructorProfileId: instructorProfile.id,
-        name: skillName,
-    }))
-    await Skill.bulkCreate(skillPromises, {
-        ignoreDuplicates: true,
-        returning: false,
-    })
-    logger.info(`Skills added for the instructors`)
+        // Adding languages
+        const languagePromises = languages.map((languageName: string) => ({
+            instructorProfileId: instructorProfile.id,
+            name: languageName,
+        }))
+        await Language.bulkCreate(languagePromises, {
+            transaction,
+            ignoreDuplicates: true,
+            returning: false,
+        })
+        logger.info(`Languages added for the instructors`)
 
-    // Adding languages
-    const languagePromises = languages.map((languageName: string) => ({
-        instructorProfileId: instructorProfile.id,
-        name: languageName,
-    }))
-    await Language.bulkCreate(languagePromises, {
-        ignoreDuplicates: true,
-        returning: false,
-    })
-    logger.info(`Languages added for the instructors`)
+        const availabilitySlotsToCreate = []
 
-    const availabilitySlotsToCreate = []
-
-    // Loop through the availability object (e.g., ['Monday', { isEnabled: true, slots: [...] }])
-    for (const [day, dayData] of Object.entries(availability)) {
-        // We only process days that the instructor has marked as available
-        if (dayData.isEnabled && dayData.slots.length > 0) {
-            // For each enabled day, loop through its time slots
-            for (const slot of dayData.slots) {
-                availabilitySlotsToCreate.push({
-                    instructorProfileId: instructorProfile.id,
-                    dayOfWeek: day,
-                    startTime: slot.from,
-                    endTime: slot.to,
-                })
+        // Loop through the availability object (e.g., ['Monday', { isEnabled: true, slots: [...] }])
+        for (const [day, dayData] of Object.entries(availability)) {
+            // We only process days that the instructor has marked as available
+            if (dayData.isEnabled && dayData.slots.length > 0) {
+                // For each enabled day, loop through its time slots
+                for (const slot of dayData.slots) {
+                    availabilitySlotsToCreate.push({
+                        instructorProfileId: instructorProfile.id,
+                        dayOfWeek: day,
+                        startTime: slot.from,
+                        endTime: slot.to,
+                    })
+                }
             }
         }
-    }
 
-    // If there are any slots to create, bulk insert them for efficiency
-    if (availabilitySlotsToCreate.length > 0) {
-        await Availability.bulkCreate(availabilitySlotsToCreate, {
-            returning: false,
-            ignoreDuplicates: true,
-        })
-        logger.info(`Availability slots created for instructor`)
-    }
+        // If there are any slots to create, bulk insert them for efficiency
+        if (availabilitySlotsToCreate.length > 0) {
+            await Availability.bulkCreate(availabilitySlotsToCreate, {
+                transaction,
+                returning: false,
+                ignoreDuplicates: true,
+            })
+            logger.info(`Availability slots created for instructor`)
+        }
 
-    // Need to mark the user as onboarded
-    instructor.onboarded = true
-    await instructor.save()
+        // Need to mark the user as onboarded
+        instructor.onboarded = true
+        await instructor.save({ transaction })
 
-    logger.info(`Instructor onboarded successfully`)
+        await transaction.commit()
+        logger.info(`Instructor onboarded successfully`)
 
-    return {
-        instructorProfile,
+        return {
+            instructorProfile,
+        }
+    } catch (error) {
+        await transaction.rollback()
+        logger.error(
+            'Error during instructor onboarding, transaction rolled back.',
+            error
+        )
+        throw new InternalServerException(`Failed to onboard instructor`)
     }
 }
