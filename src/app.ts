@@ -11,6 +11,7 @@ import passport from './middlewares/passport.middleware'
 import { limiter } from './middlewares/rateLimiter.middleware'
 import authRoutes from './routes/auth.routes'
 import sessionRoutes from './routes/session.routes'
+import onboardingRoutes from './routes/onboarding.routes'
 import { authenticateJWT } from './utils/jwt.strategy'
 
 const app = express()
@@ -36,6 +37,7 @@ app.use(morgan('dev'))
 // Regsitering the routes
 app.use('/api/v1/auth', authRoutes)
 app.use('/api/v1/session', authenticateJWT, sessionRoutes)
+app.use('/api/v1/onboarding', authenticateJWT, onboardingRoutes)
 // app.use('/api/v1/user', userRoutes)
 
 app.get('/health', (req, res) => {
