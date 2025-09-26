@@ -10,7 +10,7 @@ const appConfig = () => ({
         SECRET: getEnv('JWT_SECRET_KEY'),
         EXPIRES_IN: getEnv('JWT_EXPIRES_IN', '15m'),
         REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET'),
-        REFRESH_EXPIRES_IN: getEnv('JWT_REFRESH_EXPIRES_IN', '30d'),
+        REFRESH_EXPIRES_IN: getEnv('JWT_REFRESH_EXPIRES_IN', '7d'),
     },
     MAILER: {
         SMTP_HOST: getEnv('SMTP_HOST'),
@@ -31,6 +31,8 @@ const appConfig = () => ({
 
     FRONTEND_ORIGIN: getEnv('FRONTEND_ORIGIN'),
     FRONTEND_GOOGLE_CALLBACK_URL: getEnv('FRONTEND_GOOGLE_CALLBACK_URL'),
+
+    ENCRYPTION_KEY: getEnv('ENCRYPTION_KEY'),
 })
 
 export const config = appConfig()

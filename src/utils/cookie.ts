@@ -4,8 +4,9 @@ import { calculateExpirationDate } from './date-time'
 
 type CookiePayloadType = {
     res: Response
-    accessToken: string
+    // accessToken: string
     refreshToken: string
+    csrfToken: string
 }
 
 export const REFRESH_PATH = `${config.BASE_PATH}/auth/refresh`
@@ -13,7 +14,7 @@ export const REFRESH_PATH = `${config.BASE_PATH}/auth/refresh`
 const defaults: CookieOptions = {
     httpOnly: true,
     secure: config.NODE_ENV === 'production',
-    sameSite: config.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: config.NODE_ENV === 'production' ? 'none' : 'strict',
 }
 
 export const getRefreshTokenCookieOptions = (): CookieOptions => {
@@ -23,6 +24,17 @@ export const getRefreshTokenCookieOptions = (): CookieOptions => {
         ...defaults,
         expires,
         path: REFRESH_PATH,
+    }
+}
+
+export const getCsrfTokenCookieOptions = (): CookieOptions => {
+    const expiresIn = config.JWT.REFRESH_EXPIRES_IN
+    const expires = calculateExpirationDate(expiresIn)
+    return {
+        ...defaults,
+        httpOnly: false,
+        expires,
+        path: '/',
     }
 }
 
@@ -38,12 +50,14 @@ export const getAccessTokenCookieOptions = (): CookieOptions => {
 
 export const setAuthenticationCookies = ({
     res,
-    accessToken,
+    // accessToken,
     refreshToken,
+    csrfToken,
 }: CookiePayloadType): Response =>
     res
-        .cookie('accessToken', accessToken, getAccessTokenCookieOptions())
+        // .cookie('accessToken', accessToken, getAccessTokenCookieOptions())
         .cookie('refreshToken', refreshToken, getRefreshTokenCookieOptions())
+        .cookie('csrfToken', csrfToken, getCsrfTokenCookieOptions())
 
 export const clearAuthenticationCookies = (res: Response): Response =>
     res.clearCookie('accessToken').clearCookie('refreshToken', {
