@@ -33,6 +33,7 @@ export const connectDatabase = async () => {
         await import('../models/user.model')
         await import('../models/verification-code.model')
         await import('../models/instructorprofile.model')
+
         await import('../models/education.model')
         await import('../models/skill.model')
         await import('../models/language.model')

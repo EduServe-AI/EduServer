@@ -2,81 +2,145 @@
 
 import { DataTypes, Model, Optional } from 'sequelize'
 import { sequelize } from '../config/db.config'
+import User from './user.model'
+import EducationLevel from './educationLevel.model'
 
-interface EducationAttributes {
+interface UserEducationAttributes {
     id: string
-    instructorProfileId: string // foreignkey referencing id in the instructorprofile table
-    universityName: string
-    degreeType: string
-    degree: string
-    cgpa: number
+    userId: string
+    educationLevelId: number
+    institutionName: string
+    fieldOfStudy: string
     startYear: number
-    endYear: number
-    transcriptUrl: string
+    endYear?: number
+    isCurrent: boolean
+    gradeOrPercentage?: string
+    createdAt?: Date
+    updatedAt?: Date
 }
 
-// Define which attributes are optional during creation
-type EducationCreationAttributes = Optional<EducationAttributes, 'id'>
+type UserEducationCreationAttributes = Optional<
+    UserEducationAttributes,
+    | 'id'
+    | 'endYear'
+    | 'isCurrent'
+    | 'gradeOrPercentage'
+    | 'createdAt'
+    | 'updatedAt'
+>
 
-export default class Education
-    extends Model<EducationAttributes, EducationCreationAttributes>
-    implements EducationAttributes
+export class UserEducation
+    extends Model<UserEducationAttributes, UserEducationCreationAttributes>
+    implements UserEducationAttributes
 {
-    declare id: string
-    public instructorProfileId!: string
-    public universityName!: string
-    public degreeType!: string
-    public degree!: string
-    public cgpa!: number
+    public id!: string
+    public userId!: string
+    public educationLevelId!: number
+    public institutionName!: string
+    public fieldOfStudy!: string
     public startYear!: number
-    public endYear!: number
-    public transcriptUrl!: string
+    public endYear?: number
+    public isCurrent!: boolean
+    public gradeOrPercentage?: string
+    public readonly createdAt!: Date
+    public readonly updatedAt!: Date
+
+    // Association methods
+    public getUser!: () => Promise<User>
+    public getEducationLevel!: () => Promise<EducationLevel>
 }
 
-Education.init(
+UserEducation.init(
     {
         id: {
             type: DataTypes.UUID,
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        instructorProfileId: {
+        userId: {
             type: DataTypes.UUID,
             allowNull: false,
+            field: 'user_id',
+            references: {
+                // foreignkey referencing id in the user table
+                model: 'users',
+                key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'CASCADE',
         },
-        universityName: {
-            type: DataTypes.STRING,
+        educationLevelId: {
+            type: DataTypes.INTEGER,
             allowNull: false,
+            field: 'education_level_id',
+            references: {
+                // foreignkey referencing id in the education level table
+                model: 'education_levels',
+                key: 'id',
+            },
+            onUpdate: 'CASCADE',
+            onDelete: 'RESTRICT',
         },
-        degreeType: {
-            type: DataTypes.STRING,
+        institutionName: {
+            type: DataTypes.STRING(255),
             allowNull: false,
+            field: 'institution_name',
         },
-        degree: {
-            type: DataTypes.STRING,
+        fieldOfStudy: {
+            type: DataTypes.STRING(255),
             allowNull: false,
-        },
-        cgpa: {
-            type: DataTypes.DECIMAL(3, 2),
-            allowNull: false,
+            field: 'field_of_study',
         },
         startYear: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            field: 'start_year',
+            validate: {
+                min: 1950,
+                max: new Date().getFullYear() + 10, // Allow future dates for planned education
+            },
         },
         endYear: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
+            field: 'end_year',
+            validate: {
+                min: 1950,
+                max: new Date().getFullYear() + 10,
+            },
         },
-        transcriptUrl: {
-            type: DataTypes.TEXT,
-            allowNull: false,
+        isCurrent: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            field: 'is_current',
+        },
+        gradeOrPercentage: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            field: 'grade_or_percentage',
         },
     },
     {
         sequelize,
-        modelName: 'Education',
-        tableName: 'educations',
+        modelName: 'UserEducation',
+        tableName: 'user_educations',
+        underscored: true,
         timestamps: true,
+        validate: {
+            // Custom validation to ensure endYear is not before startYear
+            endYearAfterStart(this: UserEducation) {
+                if (this.endYear && this.endYear < this.startYear) {
+                    throw new Error('End year cannot be before start year')
+                }
+            },
+            // If not current, must have end year
+            currentOrEndYear(this: UserEducation) {
+                if (!this.isCurrent && !this.endYear) {
+                    throw new Error(
+                        'End year is required if education is not current'
+                    )
+                }
+            },
+        },
     }
 )

@@ -1,8 +1,20 @@
 // models/user.model.ts
 
-import { DataTypes, Model, Optional } from 'sequelize'
+import {
+    DataTypes,
+    Model,
+    Optional,
+    // Association,
+    HasManyGetAssociationsMixin,
+    HasOneGetAssociationMixin,
+    HasOneSetAssociationMixin,
+    HasManyAddAssociationMixin,
+    HasManyCountAssociationsMixin,
+} from 'sequelize'
 import { sequelize } from '../config/db.config'
 import { compareValue, hashValue } from '../utils/bcrypt'
+import InstructorProfiles from './instructorprofile.model'
+import { UserEducation } from './education.model'
 
 interface UserPreferences {
     enable2FA: boolean
@@ -54,6 +66,26 @@ export default class User
     async comparePassword(value: string): Promise<boolean> {
         return compareValue(value, this.password)
     }
+
+    // These methods are automatically added by Sequelize because of the 'hasOne' association.
+    // By declaring them here, you get full TypeScript support and autocompletion.
+    public getInstructorProfile!: HasOneGetAssociationMixin<InstructorProfiles>
+    public setInstructorProfile!: HasOneSetAssociationMixin<
+        InstructorProfiles,
+        'id'
+    >
+
+    // Association methods for UserEducation (One-to-Many)
+    public getEducation!: HasManyGetAssociationsMixin<UserEducation>
+    public addEducation!: HasManyAddAssociationMixin<UserEducation, 'id'>
+    public countEducations!: HasManyCountAssociationsMixin
+    // Association properties
+    // public instructor?: InstructorProfiles
+
+    // // Static associations
+    // public static associations: {
+    //     instructorProfile: Association<User, InstructorProfiles>
+    // }
 
     // 🔍 Hide sensitive fields when converting to JSON
     toJSON() {

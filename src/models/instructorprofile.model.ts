@@ -1,20 +1,30 @@
 // models/instructor.model.ts
 
-import { DataTypes, Model, Optional, Association } from 'sequelize'
+import {
+    DataTypes,
+    Model,
+    Optional,
+    Association,
+    BelongsToGetAssociationMixin,
+} from 'sequelize'
 import { sequelize } from '../config/db.config'
 import type Skill from './skill.model'
 import type Language from './language.model'
-import type Education from './education.model'
+import type { UserEducation } from './education.model'
+import type User from './user.model'
 import { pricing_tier } from '../@types/pricing'
 
 interface InstructorAttributes {
     id: string
-    instructorId: string // foreignkey referencing id in the users table
+    userId: string // foreignkey referencing id in the users table
     bio: string
-    githubUrl: string
-    linkedinUrl: string
+    githubUrl?: string
+    linkedinUrl?: string
     basePrice: number
     level: pricing_tier
+    isProfileComplete: boolean
+    isApproved: boolean
+    approvalDate?: Date
 }
 
 type InstructorCreationAttributes = Optional<
@@ -27,21 +37,27 @@ export default class InstructorProfiles
     implements InstructorAttributes
 {
     declare id: string
-    public instructorId!: string
+    public userId!: string
     public bio!: string
     public githubUrl!: string
     public linkedinUrl!: string
     public basePrice!: number
     public level!: pricing_tier
+    public isProfileComplete!: boolean
+    public isApproved!: boolean
+    public approvalDate?: Date
+
+    // Automatic assosications methods provided by sequelize
+    public getUser!: BelongsToGetAssociationMixin<User>
 
     // Association properties
     public skills?: Skill[]
     public languages?: Language[]
-    public educations?: Education[]
+    public educations?: UserEducation[]
 
     // Static associations
     public static associations: {
-        educations: Association<InstructorProfiles, Education>
+        educations: Association<InstructorProfiles, UserEducation>
         skills: Association<InstructorProfiles, Skill>
         languages: Association<InstructorProfiles, Language>
     }
@@ -54,26 +70,54 @@ InstructorProfiles.init(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        instructorId: {
+        userId: {
             type: DataTypes.UUID,
             allowNull: false,
+            unique: true,
+            field: 'user_id',
         },
         bio: {
-            type: DataTypes.STRING,
-            allowNull: false,
+            type: DataTypes.TEXT,
+            allowNull: true,
         },
         githubUrl: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(255),
             allowNull: true,
+            field: 'github_url',
+            validate: {
+                isUrl: true,
+            },
         },
         linkedinUrl: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(255),
             allowNull: true,
+            field: 'linkedin_url',
+            validate: {
+                isUrl: true,
+            },
         },
         basePrice: {
-            type: DataTypes.INTEGER,
-            defaultValue: 100,
-            allowNull: false,
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: true,
+            field: 'base_price',
+            validate: {
+                min: 0,
+            },
+        },
+        isProfileComplete: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            field: 'is_profile_complete',
+        },
+        isApproved: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+            field: 'is_approved',
+        },
+        approvalDate: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'approval_date',
         },
         level: {
             type: DataTypes.ENUM('beginner', 'bronze', 'silver', 'gold'),
@@ -83,7 +127,8 @@ InstructorProfiles.init(
     {
         sequelize,
         modelName: 'InstructorProfile',
-        tableName: 'instructorprofiles',
+        tableName: 'instructor_profiles',
         timestamps: true,
+        underscored: true,
     }
 )
