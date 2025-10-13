@@ -46,7 +46,7 @@ UserLanguage.init(
             onDelete: 'CASCADE',
         },
         languageId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull: false,
             field: 'language_id',
             references: {

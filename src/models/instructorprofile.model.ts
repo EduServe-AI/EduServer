@@ -10,7 +10,7 @@ import {
 import { sequelize } from '../config/db.config'
 import type Skill from './skill.model'
 import type Language from './language.model'
-import type { UserEducation } from './education.model'
+import type UserEducation from './education.model'
 import type User from './user.model'
 import { pricing_tier } from '../@types/pricing'
 

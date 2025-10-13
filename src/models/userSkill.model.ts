@@ -47,7 +47,7 @@ UserSkill.init(
             onDelete: 'CASCADE',
         },
         skillId: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.UUID,
             allowNull: false,
             field: 'skill_id',
             references: {

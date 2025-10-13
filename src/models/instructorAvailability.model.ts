@@ -78,7 +78,7 @@ InstructorAvailability.init(
         indexes: [
             {
                 unique: true,
-                fields: ['instructor_id', 'day_of_week_id'],
+                fields: ['user_id', 'day_of_week_id'],
             },
         ],
     }

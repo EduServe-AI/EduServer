@@ -29,7 +29,7 @@ type UserEducationCreationAttributes = Optional<
     | 'updatedAt'
 >
 
-export class UserEducation
+export default class UserEducation
     extends Model<UserEducationAttributes, UserEducationCreationAttributes>
     implements UserEducationAttributes
 {

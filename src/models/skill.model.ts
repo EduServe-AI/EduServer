@@ -36,7 +36,7 @@ Skill.init(
         },
         category: {
             type: DataTypes.STRING(50),
-            allowNull: false,
+            allowNull: true,
         },
         isActive: {
             type: DataTypes.BOOLEAN,

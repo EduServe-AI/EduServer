@@ -7,7 +7,7 @@ interface LanguageAttributes {
     id: string
     name: string
     code: string
-    isActive: boolean
+    isActive?: boolean
 }
 
 type LanguageCreationAttributes = Optional<LanguageAttributes, 'id'>

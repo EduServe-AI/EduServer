@@ -1,6 +1,6 @@
 import User from './user.model'
 import InstructorProfiles from './instructorprofile.model'
-import { UserEducation } from './education.model'
+import UserEducation from './education.model'
 import Skill from './skill.model'
 import Language from './language.model'
 // import Availability from './availability.model'

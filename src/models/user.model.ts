@@ -14,7 +14,10 @@ import {
 import { sequelize } from '../config/db.config'
 import { compareValue, hashValue } from '../utils/bcrypt'
 import InstructorProfiles from './instructorprofile.model'
-import { UserEducation } from './education.model'
+import UserEducation from './education.model'
+import UserSkill from './userSkill.model'
+import UserLanguage from './userLanguage.model'
+import InstructorAvailability from './instructorAvailability.model'
 
 interface UserPreferences {
     enable2FA: boolean
@@ -69,23 +72,35 @@ export default class User
 
     // These methods are automatically added by Sequelize because of the 'hasOne' association.
     // By declaring them here, you get full TypeScript support and autocompletion.
+    // User <=> InstructorProfile
     public getInstructorProfile!: HasOneGetAssociationMixin<InstructorProfiles>
     public setInstructorProfile!: HasOneSetAssociationMixin<
         InstructorProfiles,
         'id'
     >
 
-    // Association methods for UserEducation (One-to-Many)
-    public getEducation!: HasManyGetAssociationsMixin<UserEducation>
+    // Association methods for UserEducation (One-to-Many) : User <=> UserEducation
+    public getEducations!: HasManyGetAssociationsMixin<UserEducation>
     public addEducation!: HasManyAddAssociationMixin<UserEducation, 'id'>
     public countEducations!: HasManyCountAssociationsMixin
-    // Association properties
-    // public instructor?: InstructorProfiles
 
-    // // Static associations
-    // public static associations: {
-    //     instructorProfile: Association<User, InstructorProfiles>
-    // }
+    // Association methods for UserSkill (One-to-Many ) : User <=> UserSkill
+    public getUserSkills!: HasManyGetAssociationsMixin<UserSkill>
+    public addUserSkills!: HasManyAddAssociationMixin<UserSkill, 'id'>
+    public countUserSkills!: HasManyCountAssociationsMixin
+
+    // Association methods for UserLanguages (One-to-Many) : User <=> UserLanguage
+    public getUserLanguages!: HasManyGetAssociationsMixin<UserLanguage>
+    public addUserLanguages!: HasManyAddAssociationMixin<UserLanguage, 'id'>
+    public countUserLanguages!: HasManyCountAssociationsMixin
+
+    // Association methods for UserAvailability (One-to-Many) : User <=> InstructorAvailability
+    public getAvailabilities!: HasManyGetAssociationsMixin<InstructorAvailability>
+    public addAvailability!: HasManyAddAssociationMixin<
+        InstructorAvailability,
+        'id'
+    >
+    public countAvailabilities!: HasManyCountAssociationsMixin
 
     // 🔍 Hide sensitive fields when converting to JSON
     toJSON() {
