@@ -33,16 +33,29 @@ export const connectDatabase = async () => {
         await import('../models/user.model')
         await import('../models/verification-code.model')
         await import('../models/instructorprofile.model')
-        await import('../models/education.model')
+
+        // importing the master tables
+        await import('../models/educationLevel.model')
         await import('../models/skill.model')
         await import('../models/language.model')
-        await import('../models/availability.model')
+        await import('../models/dayofWeek.model')
+
+        // importing the junction tables
+        await import('../models/education.model') // --- > UserEducation
+        await import('../models/userSkill.model') // --- > UserSkill
+        await import('../models/userLanguage.model') // --- > UserLanguage
+        await import('../models/instructorAvailability.model') // --- > InstructorAvailability
+        await import('../models/timeSlot.model') // --- > TimeSlot
+
+        // await import('../models/availability.model')
 
         logger.info('✅ Models imported successfully')
 
         // Set up associations
         const { setUpAssociations } = await import('../models/associations')
+
         setUpAssociations()
+
         logger.info('✅ Model associations established successfully')
 
         // Sync models in development

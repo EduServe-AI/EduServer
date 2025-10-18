@@ -6,7 +6,8 @@ import { sequelize } from '../config/db.config'
 interface LanguageAttributes {
     id: string
     name: string
-    instructorProfileId: string
+    code: string
+    isActive?: boolean
 }
 
 type LanguageCreationAttributes = Optional<LanguageAttributes, 'id'>
@@ -17,7 +18,8 @@ export default class Language
 {
     declare id: string
     public name!: string
-    public instructorProfileId!: string
+    public code!: string
+    public isActive!: boolean
 }
 
 Language.init(
@@ -28,18 +30,26 @@ Language.init(
             primaryKey: true,
         },
         name: {
-            type: DataTypes.STRING,
+            type: DataTypes.STRING(50),
             allowNull: false,
+            unique: true,
         },
-        instructorProfileId: {
-            type: DataTypes.UUID,
+        code: {
+            type: DataTypes.STRING(5),
             allowNull: false,
+            comment: 'ISO 639-1 code',
+        },
+        isActive: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            field: 'is_active',
         },
     },
     {
         sequelize,
         tableName: 'languages',
-        modelName: 'language',
+        modelName: 'Language',
+        underscored: true,
         timestamps: true,
     }
 )
