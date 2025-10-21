@@ -47,6 +47,9 @@ export const connectDatabase = async () => {
         await import('../models/instructorAvailability.model') // --- > InstructorAvailability
         await import('../models/timeSlot.model') // --- > TimeSlot
 
+        // Importing the models related to user sessions
+        await import('../models/requests.model') // --- > Requuests
+
         // await import('../models/availability.model')
 
         logger.info('✅ Models imported successfully')
