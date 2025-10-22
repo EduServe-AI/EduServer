@@ -76,7 +76,7 @@ export const loginController = asyncHandler(
             })
         }
 
-        const csrfToken = refreshToken
+        const csrfToken = crypto.randomBytes(32).toString('hex')
         return setAuthenticationCookies({
             res,
             // accessToken,
