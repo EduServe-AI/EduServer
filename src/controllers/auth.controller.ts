@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { NextFunction, Request, Response } from 'express'
 import { config } from '../config/app.config'
 import { HTTP_STATUS } from '../config/http.config'
@@ -38,7 +39,7 @@ export const registerController = asyncHandler(
             userAgent,
         })
         const { user, accessToken, refreshToken } = await registerService(body)
-        const csrfToken = refreshToken
+        const csrfToken = crypto.randomBytes(32).toString('hex')
         return setAuthenticationCookies({
             res,
             // accessToken,
@@ -212,11 +213,9 @@ export const googleCallbackController = asyncHandler(
                         }
 
                         const userAgent = req.headers['user-agent']
-                        const { refreshToken } = await loginWithGoogleService(
-                            user.id,
-                            userAgent
-                        )
-                        const csrfToken = refreshToken
+                        const { refreshToken, accessToken } =
+                            await loginWithGoogleService(user.id, userAgent)
+                        const csrfToken = crypto.randomBytes(32).toString('hex')
 
                         setAuthenticationCookies({
                             res,
@@ -226,6 +225,12 @@ export const googleCallbackController = asyncHandler(
                         })
 
                         res.redirect(`${config.FRONTEND_ORIGIN}/dashboard`)
+
+                        const redirectUrl = new URL(
+                            `${config.FRONTEND_ORIGIN}/dashboard`
+                        )
+                        redirectUrl.searchParams.set('accessToken', accessToken)
+                        res.redirect(redirectUrl.toString())
 
                         return resolve()
                     } catch (e) {
