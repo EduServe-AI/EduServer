@@ -10,8 +10,8 @@ import { errorHandler } from './middlewares/errorHandler.middleware'
 import passport from './middlewares/passport.middleware'
 import { limiter } from './middlewares/rateLimiter.middleware'
 import authRoutes from './routes/auth.routes'
-import sessionRoutes from './routes/session.routes'
 import onboardingRoutes from './routes/onboarding.routes'
+import sessionRoutes from './routes/session.routes'
 import { authenticateJWT } from './utils/jwt.strategy'
 
 const app = express()
@@ -19,10 +19,19 @@ const app = express()
 app.use(helmet())
 app.use(
     cors({
-        origin: ['http://localhost:3000', config.FRONTEND_ORIGIN],
+        origin: [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            config.FRONTEND_ORIGIN,
+        ],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'Cookie',
+            'x-csrf-token',
+        ],
     })
 )
 app.use(limiter)

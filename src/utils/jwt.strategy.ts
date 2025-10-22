@@ -17,13 +17,33 @@ interface JwtPayload {
 const options: StrategyOptionsWithRequest = {
     jwtFromRequest: ExtractJwt.fromExtractors([
         (req) => {
-            const accessToken = req.cookies.accessToken
-            if (!accessToken) {
+            const authHeader = req.headers['authorization']
+
+            if (!authHeader || typeof authHeader !== 'string') {
                 throw new UnauthorizedException(
-                    'Unauthorized access token',
+                    'Unauthorized: Authorization header not found',
                     ErrorCode.AUTH_TOKEN_NOT_FOUND
                 )
             }
+
+            // Expecting "Bearer <token>"
+            const parts = authHeader.split(' ')
+            if (parts.length !== 2 || parts[0] !== 'Bearer') {
+                throw new UnauthorizedException(
+                    'Invalid Authorization header format. Format is "Bearer <token>"',
+                    ErrorCode.AUTH_INVALID_TOKEN
+                )
+            }
+
+            const accessToken = parts[1]
+
+            if (!accessToken) {
+                throw new UnauthorizedException(
+                    'Access token not found in Authorization header',
+                    ErrorCode.AUTH_TOKEN_NOT_FOUND
+                )
+            }
+
             return accessToken
         },
     ]),

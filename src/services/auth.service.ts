@@ -80,8 +80,28 @@ export const registerService = async (registerData: RegisterDto) => {
         ...verifyEmailTemplate(verificationUrl),
     })
 
+    const session = await Session.create({
+        userId: newUser.id,
+        userAgent: registerData.userAgent,
+        expiredAt: thirtyDaysFromNow(),
+    } as any)
+
+    const accessToken = signJwtToken({
+        userId: newUser.id,
+        sessionId: session.id,
+    })
+
+    const refreshToken = signJwtToken(
+        {
+            sessionId: session.id,
+        },
+        refreshTokenSignOptions
+    )
+
     return {
         user: newUser,
+        accessToken,
+        refreshToken,
     }
 }
 

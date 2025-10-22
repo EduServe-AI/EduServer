@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { NextFunction, Request, Response } from 'express'
 import { config } from '../config/app.config'
 import { HTTP_STATUS } from '../config/http.config'
@@ -15,7 +16,6 @@ import {
 } from '../services/auth.service'
 import {
     clearAuthenticationCookies,
-    getAccessTokenCookieOptions,
     getRefreshTokenCookieOptions,
     setAuthenticationCookies,
 } from '../utils/cookie'
@@ -33,14 +33,27 @@ import {
 
 export const registerController = asyncHandler(
     async (req: Request, res: Response): Promise<Response> => {
+        const userAgent = req.headers['user-agent']
         const body = registerSchema.parse({
             ...req.body,
+            userAgent,
         })
-        const { user } = await registerService(body)
-        return res.status(HTTP_STATUS.CREATED).json({
-            message: 'User registered successfully',
-            data: user,
+        const { user, accessToken, refreshToken } = await registerService(body)
+        const csrfToken = crypto.randomBytes(32).toString('hex')
+        return setAuthenticationCookies({
+            res,
+            // accessToken,
+            refreshToken,
+            csrfToken,
         })
+            .status(HTTP_STATUS.CREATED)
+            .json({
+                message: 'User registered successfully',
+                user,
+                secret: {
+                    accessToken,
+                },
+            })
     }
 )
 
@@ -63,16 +76,21 @@ export const loginController = asyncHandler(
             })
         }
 
+        const csrfToken = crypto.randomBytes(32).toString('hex')
         return setAuthenticationCookies({
             res,
-            accessToken,
+            // accessToken,
             refreshToken,
+            csrfToken,
         })
             .status(HTTP_STATUS.OK)
             .json({
                 message: 'User login successfully',
                 mfaRequired,
                 user,
+                secret: {
+                    accessToken,
+                },
             })
     }
 )
@@ -80,6 +98,7 @@ export const loginController = asyncHandler(
 export const refreshTokenController = asyncHandler(
     async (req: Request, res: Response): Promise<Response> => {
         const refreshToken = req.cookies.refreshToken as string | undefined
+
         if (!refreshToken) {
             throw new UnauthorizedException('Missing refresh token')
         }
@@ -95,12 +114,15 @@ export const refreshTokenController = asyncHandler(
             )
         }
 
-        return res
-            .status(HTTP_STATUS.OK)
-            .cookie('accessToken', accessToken, getAccessTokenCookieOptions())
-            .json({
-                message: 'Refresh access token successfully',
-            })
+        return (
+            res
+                .status(HTTP_STATUS.OK)
+                // .cookie('accessToken', accessToken, getAccessTokenCookieOptions())
+                .json({
+                    message: 'Refresh access token successfully',
+                    accessToken,
+                })
+        )
     }
 )
 
@@ -191,16 +213,24 @@ export const googleCallbackController = asyncHandler(
                         }
 
                         const userAgent = req.headers['user-agent']
-                        const { accessToken, refreshToken } =
+                        const { refreshToken, accessToken } =
                             await loginWithGoogleService(user.id, userAgent)
+                        const csrfToken = crypto.randomBytes(32).toString('hex')
 
                         setAuthenticationCookies({
                             res,
-                            accessToken,
+                            // accessToken,
                             refreshToken,
+                            csrfToken,
                         })
 
                         res.redirect(`${config.FRONTEND_ORIGIN}/dashboard`)
+
+                        const redirectUrl = new URL(
+                            `${config.FRONTEND_ORIGIN}/dashboard`
+                        )
+                        redirectUrl.searchParams.set('accessToken', accessToken)
+                        res.redirect(redirectUrl.toString())
 
                         return resolve()
                     } catch (e) {
