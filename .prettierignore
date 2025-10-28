@@ -1,0 +1,21 @@
+# Ignore artifacts:
+build
+coverage
+dist
+node_modules
+# Ignore configuration files:
+.env
+.env.local
+.env.production
+.env.*.local
+# Ignore other files:
+.prettierrc
+.prettierrc.js
+.prettierrc.json
+.prettierrc.yaml
+.prettierrc.yml
+.prettierrc.toml
+.prettierignore
+# Ignore editor and IDE files:
+.vscode
+.idea

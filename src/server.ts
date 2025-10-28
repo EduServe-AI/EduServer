@@ -1,25 +1,22 @@
-import app from './app';
-import config from './config/constants';
-import { sequelize } from './config/db.config';
-import { syncModels } from './models';
-import cors from "cors"
+import app from './app'
+import { config } from './config/app.config'
+import { connectDatabase } from './config/db.config'
+import logger from './utils/logger/logger'
 
-// Database connection
-sequelize.authenticate()
-         .then(async () => {
-             console.log('✅ Connection to the database has been established successfully')
-             await syncModels();
-         })
-         .catch((err) => {
-            console.error('❌ DB Connection failed:', err)
- }) 
+// Start server
+async function startServer() {
+    try {
+        await connectDatabase()
 
+        app.listen(config.PORT, () => {
+            logger.info(
+                `🚀 Server running on http://localhost:${config.PORT} in ${config.NODE_ENV}`
+            )
+        })
+    } catch (error) {
+        logger.error('❌ Failed to start server:', error)
+        process.exit(1)
+    }
+}
 
-// App connection with express
-app.listen(config.port, () => {
-  console.log(`🚀 Server running on http://localhost:${config.port}`) 
-})
-
-         
-
-
+startServer()

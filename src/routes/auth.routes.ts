@@ -1,9 +1,30 @@
-import { Router } from "express";
-import { registerStudent } from "../controllers/auth.controller";
+import { Router } from 'express'
+import {
+    forgotPasswordController,
+    googleAuthController,
+    googleCallbackController,
+    loginController,
+    logoutController,
+    refreshTokenController,
+    registerController,
+    resetPasswordController,
+    verifyEmailController,
+} from '../controllers/auth.controller'
+import { authenticateJWT } from '../utils/jwt.strategy'
 
-const router = Router();
+const authRoutes = Router()
 
-router.post("/student-signup", registerStudent)
+authRoutes.post('/register', registerController)
+authRoutes.post('/login', loginController)
+authRoutes.post('/verify/email', verifyEmailController)
+authRoutes.post('/password/forgot', forgotPasswordController)
+authRoutes.post('/password/reset', resetPasswordController)
+authRoutes.post('/logout', authenticateJWT, logoutController)
 
+authRoutes.get('/refresh', refreshTokenController)
 
-export default router; 
+authRoutes.get('/google', googleAuthController)
+
+authRoutes.get('/google/callback', googleCallbackController)
+
+export default authRoutes
