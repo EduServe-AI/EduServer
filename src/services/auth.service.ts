@@ -300,13 +300,15 @@ export const forgotPasswordService = async (email: string) => {
     }&exp=${expiresAt.getTime()}`
 
     try {
-        const emailResult = await sendEmail({
+        const { data, error } = await sendEmail({
             to: user.email,
             ...passwordResetTemplate(resetLink),
         })
 
-        if (!emailResult?.messageId) {
-            throw new InternalServerException('Failed to send email')
+        if (!data?.id) {
+            throw new InternalServerException(
+                `${error?.name} ${error?.message}`
+            )
         }
     } catch (emailError: unknown) {
         logger.error('Failed to send password reset email:', emailError)

@@ -20,8 +20,8 @@ const appConfig = () => ({
         SMTP_PASS: getEnv('SMTP_PASS'),
         FROM_EMAIL: getEnv('FROM_EMAIL'),
     },
-    //   MAILER_SENDER: getEnv("MAILER_SENDER"),
-    //   RESEND_API_KEY: getEnv("RESEND_API_KEY"),
+    RESEND_FROM_EMAIL: getEnv('RESEND_FROM_EMAIL'),
+    RESEND_API_KEY: getEnv('RESEND_API_KEY'),
 
     GOOGLE: {
         CLIENT_ID: getEnv('GOOGLE_CLIENT_ID'),
