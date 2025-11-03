@@ -21,7 +21,7 @@
     "license": "ISC",
     "type": "commonjs",
     "dependencies": {
-        "@vercel/node": "^5.5.3",
+        "@vercel/node": "^4.0.0",
         "bcrypt": "^6.0.0",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.5",
@@ -75,7 +75,6 @@
         "husky": "^9.1.7",
         "jiti": "^2.5.1",
         "prettier": "^3.6.2",
-        "sequelize-auto-migrations": "^1.0.3",
         "sequelize-cli": "^6.6.3",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
