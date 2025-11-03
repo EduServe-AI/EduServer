@@ -3,14 +3,14 @@ import { HTTP_STATUS } from '../config/http.config'
 import asyncHandler from '../middlewares/asyncHandler.middleware'
 import { onboardingSchema } from '../validation/onboarding.validation'
 
-import { onboardInstructor } from '../services/onboarding.service'
+// import { onboardInstructor } from '../services/onboarding.service'
 
 export const onboardInstructorController = asyncHandler(
     async (req: Request, res: Response): Promise<Response> => {
         const body = onboardingSchema.parse({
             ...req.body,
         })
-
+        console.log('body', body)
         const userId = req.user?.id
         if (!userId) {
             return res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -19,12 +19,13 @@ export const onboardInstructorController = asyncHandler(
             })
         }
 
-        const { instructorProfile } = await onboardInstructor(body, userId)
+        // const { instructorProfile } = await onboardInstructor(body, userId)
 
-        return res.status(HTTP_STATUS.CREATED).json({
-            success: true,
-            message: 'Instructor onboarded successfully',
-            data: { instructorProfile },
-        })
+        // return res.status(HTTP_STATUS.CREATED).json({
+        //     success: true,
+        //     message: 'Instructor onboarded successfully',
+        //     data: { instructorProfile },
+        // })
+        return res.status(HTTP_STATUS.CREATED)
     }
 )

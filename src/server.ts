@@ -1,12 +1,18 @@
 import app from './app'
 import { config } from './config/app.config'
 import { connectDatabase } from './config/db.config'
+import { populateDaysIfEmpty } from './scripts/populateDays'
+import { populateLanguagesIfEmpty } from './scripts/populateLanguages'
 import logger from './utils/logger/logger'
 
 // Start server
 async function startServer() {
     try {
         await connectDatabase()
+
+        // populating master tables
+        await populateLanguagesIfEmpty()
+        await populateDaysIfEmpty()
 
         app.listen(config.PORT, () => {
             logger.info(
